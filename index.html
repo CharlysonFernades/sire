@@ -8,7 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
 :root{--blue:#0b3d91;--blue2:#1456c0;--dark:#082d6b;--yellow:#ffcc00;--bg:#eef4ff;--white:#fff;--text:#222;--muted:#657080;--green:#16834b;--red:#c62828;--orange:#c76a00}
@@ -22,7 +24,7 @@ body{background:linear-gradient(135deg,#eef4ff,#f8fbff);color:var(--text);overfl
 .login-brand h1{color:var(--blue);font-size:1.8rem;line-height:1.15}.login-brand p{color:var(--muted);margin-top:7px}
 .profile-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
 .profile-option{border:2px solid #e4eaf4;background:#f7f9fd;color:var(--blue);padding:12px 8px;border-radius:15px;cursor:pointer;font-weight:700;transition:.2s}.profile-option:hover{transform:translateY(-2px);border-color:#b8c9e7}.profile-option.selected{border-color:var(--blue);background:#eef4ff;box-shadow:0 7px 16px rgba(11,61,145,.12)}
-.login-fields{display:grid;gap:12px;margin-top:13px}.login-help{margin-top:16px;background:#f4f7fb;border-radius:14px;padding:12px;color:#58667a;font-size:.81rem;line-height:1.5}.login-error{margin-top:12px}
+.login-fields{display:grid;gap:12px;margin-top:13px}.password-wrap{position:relative}.password-wrap input{padding-right:105px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:#eef4ff;color:var(--blue);font-weight:700;padding:7px 10px;border-radius:10px;cursor:pointer}.password-toggle:hover{background:#dfeaff}.password-toggle:focus-visible{outline:3px solid rgba(20,86,192,.25);outline-offset:2px}.login-help{margin-top:16px;background:#f4f7fb;border-radius:14px;padding:12px;color:#58667a;font-size:.81rem;line-height:1.5}.login-error{margin-top:12px}
 
 /* APP */
 header{background:rgba(255,204,0,.96);backdrop-filter:blur(10px);padding:13px 6%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1000;box-shadow:0 4px 18px rgba(0,0,0,.12);gap:16px}
@@ -79,7 +81,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
     <form id="loginForm" onsubmit="performLogin(event)">
       <div class="login-fields">
         <div><label>E-mail</label><input id="loginUser" type="email" autocomplete="username" required placeholder="seuemail@exemplo.com"></div>
-        <div><label>Senha</label><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Digite sua senha"></div>
+        <div><label>Senha</label><div class="password-wrap"><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Digite sua senha"><button id="loginPassToggle" class="password-toggle" type="button" onclick="toggleLoginPassword()" aria-label="Mostrar senha" aria-pressed="false">👁 Mostrar</button></div></div>
         <button class="btn" type="submit">Entrar no SIRE</button>
         <button class="btn secondary" type="button" onclick="resetPassword()">Esqueci minha senha</button>
       </div>
@@ -289,15 +291,19 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
 <script src="./firebase-config.js"></script>
 <script>
 /* ==========================================================
-   SIRE V5.1 GRÁTIS — Firebase Spark / GitHub Pages
+   SIRE V5.4 SEGURANÇA — Firebase Spark / GitHub Pages
    - Firebase Authentication (e-mail e senha)
    - Cloud Firestore (dados compartilhados)
    - Sem Cloud Functions: compatível com a arquitetura Spark proposta
    - Perfis lidos do Firestore; nunca escolhidos pelo usuário no navegador
+   - V5.4: esquema de campos restrito, histórico protegido e status Ativo/Inativo
+   - Login: botão Mostrar/Ocultar senha (somente visual, sem armazenar a senha)
 ========================================================== */
 const FIREBASE_SDK_VERSION='12.17.1';
 let fb={},auth=null,firestore=null;
@@ -347,6 +353,16 @@ function humanFirebaseError(err){
  return known[code]||err?.message||'Ocorreu um erro inesperado.';
 }
 
+function toggleLoginPassword(){
+ const input=document.getElementById('loginPass'),button=document.getElementById('loginPassToggle');
+ if(!input||!button)return;
+ const showing=input.type==='text';
+ input.type=showing?'password':'text';
+ button.textContent=showing?'👁 Mostrar':'🙈 Ocultar';
+ button.setAttribute('aria-label',showing?'Mostrar senha':'Ocultar senha');
+ button.setAttribute('aria-pressed',showing?'false':'true');
+}
+
 async function performLogin(e){
  e.preventDefault();if(!firebaseReady)return showLoginMessage('Configure o Firebase antes de entrar.','info');
  const email=document.getElementById('loginUser').value.trim();
@@ -376,11 +392,17 @@ function showLoggedOut(){
  currentUser=null;db={routes:[],feedbacks:[],drivers:[],notifications:[],users:[]};
  document.getElementById('appShell').classList.add('hidden');
  document.getElementById('loginScreen').classList.remove('hidden');
+ const pass=document.getElementById('loginPass'),toggle=document.getElementById('loginPassToggle');
+ if(pass)pass.type='password';
+ if(toggle){toggle.textContent='👁 Mostrar';toggle.setAttribute('aria-label','Mostrar senha');toggle.setAttribute('aria-pressed','false')}
 }
 
 async function logout(){if(firebaseReady&&auth)await fb.signOut(auth);showLoggedOut()}
 
 async function startApp(){
+ const loginPass=document.getElementById('loginPass'),loginToggle=document.getElementById('loginPassToggle');
+ if(loginPass){loginPass.value='';loginPass.type='password'}
+ if(loginToggle){loginToggle.textContent='👁 Mostrar';loginToggle.setAttribute('aria-label','Mostrar senha');loginToggle.setAttribute('aria-pressed','false')}
  document.getElementById('loginScreen').classList.add('hidden');
  document.getElementById('appShell').classList.remove('hidden');
  document.getElementById('loginError').innerHTML='';
@@ -454,9 +476,13 @@ function openDriverSection(id){showPage('motorista');setTimeout(()=>document.get
 
 /* ROTAS */
 function populateRouteSelects(){
- const optionHtml=db.routes.map(r=>`<option value="${r.id}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}</option>`).join('');
- document.getElementById('routeSelect').innerHTML=optionHtml;document.getElementById('fbRota').innerHTML='<option value="">Selecione</option>'+optionHtml;document.getElementById('driverRouteId').innerHTML='<option value="">Sem rota definida</option>'+optionHtml;document.getElementById('noticeRoute').innerHTML='<option value="all">Todas as rotas (aviso geral)</option>'+optionHtml;
- const ar=document.getElementById('accountRoute');if(ar)ar.innerHTML='<option value="">Selecione uma rota</option>'+optionHtml;
+ const allOptions=db.routes.map(r=>`<option value="${r.id}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}${r.active===false?' (Inativa)':''}</option>`).join('');
+ const activeOptions=db.routes.filter(r=>r.active!==false).map(r=>`<option value="${r.id}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}</option>`).join('');
+ document.getElementById('routeSelect').innerHTML=allOptions;
+ document.getElementById('fbRota').innerHTML='<option value="">Selecione</option>'+activeOptions;
+ document.getElementById('driverRouteId').innerHTML='<option value="">Selecione uma rota ativa</option>'+activeOptions;
+ document.getElementById('noticeRoute').innerHTML='<option value="all">Todas as rotas (aviso geral)</option>'+activeOptions;
+ const ar=document.getElementById('accountRoute');if(ar)ar.innerHTML='<option value="">Selecione uma rota ativa</option>'+activeOptions;
 }
 function configureRouteControls(){
  populateRouteSelects();const toolbar=document.getElementById('routeToolbar'),search=document.getElementById('routeSearch'),select=document.getElementById('routeSelect');
@@ -474,7 +500,22 @@ function searchRoutes(){if(currentUser.role!=='admin')return;const q=document.ge
 function locateUser(){if(!navigator.geolocation){alert('Seu navegador não oferece geolocalização.');return}navigator.geolocation.getCurrentPosition(pos=>{const{latitude,longitude}=pos.coords;initMap();map.setView([latitude,longitude],15);L.marker([latitude,longitude]).addTo(map).bindPopup('Sua localização aproximada').openPopup()},()=>alert('Não foi possível obter sua localização.'))}
 
 /* AJUDA E PROTOCOLO */
-function configureFeedbackForm(){populateRouteSelects();document.getElementById('fbNome').value=currentUser.displayName||'';const routeField=document.getElementById('fbRota');if(currentUser.role==='admin'){routeField.disabled=false}else{routeField.value=String(currentUser.routeId??'');routeField.disabled=true}}
+function configureFeedbackForm(){
+ populateRouteSelects();
+ const nameField=document.getElementById('fbNome'),emailField=document.getElementById('fbEmail'),routeField=document.getElementById('fbRota');
+ nameField.value=currentUser.displayName||'';
+ if(currentUser.role!=='admin'){
+  nameField.readOnly=true;
+  emailField.value=currentUser.email||'';
+  emailField.readOnly=true;
+  routeField.value=String(currentUser.routeId??'');
+  routeField.disabled=true;
+ }else{
+  nameField.readOnly=false;
+  emailField.readOnly=false;
+  routeField.disabled=false;
+ }
+}
 function openFeedback(){showPage('ajuda');setTimeout(()=>document.getElementById('feedbackBox').scrollIntoView({behavior:'smooth'}),80)}
 function clearFeedback(){document.getElementById('feedbackForm').reset();document.getElementById('feedbackResult').innerHTML='';configureFeedbackForm()}
 async function submitFeedback(e){
@@ -580,10 +621,12 @@ async function saveRequestAnswer(){
 }
 function answerRequest(protocol){openRequestDetail(protocol,true)}
 async function addRoute(){const number=document.getElementById('newRouteNumber').value.trim(),name=document.getElementById('newRouteName').value.trim(),school=document.getElementById('newRouteSchool').value.trim();if(!number||!name||!school)return alert('Preencha número, nome e escola.');if(db.routes.some(r=>r.number===number))return alert('Esse número de rota já existe.');const id=uid(),route={id,number,name,school,active:true,stops:[]};try{await fb.setDoc(fb.doc(firestore,'routes',String(id)),route);['newRouteNumber','newRouteName','newRouteSchool'].forEach(x=>document.getElementById(x).value='');await loadData();populateRouteSelects();renderRoutesTable();renderHome();alert('Rota cadastrada.')}catch(err){alert(humanFirebaseError(err))}}
-function renderRoutesTable(){document.getElementById('routesTable').innerHTML=`<table><thead><tr><th>Número</th><th>Nome</th><th>Escola</th><th>Paradas</th></tr></thead><tbody>${db.routes.map(r=>`<tr><td>${escapeHTML(r.number)}</td><td>${escapeHTML(r.name)}</td><td>${escapeHTML(r.school)}</td><td>${(r.stops||[]).length}</td></tr>`).join('')}</tbody></table>`}
+function renderRoutesTable(){document.getElementById('routesTable').innerHTML=`<table><thead><tr><th>Número</th><th>Nome</th><th>Escola</th><th>Paradas</th><th>Status</th><th>Ação</th></tr></thead><tbody>${db.routes.map(r=>`<tr><td>${escapeHTML(r.number)}</td><td>${escapeHTML(r.name)}</td><td>${escapeHTML(r.school)}</td><td>${(r.stops||[]).length}</td><td>${r.active===false?'<span class="status analysis">Inativa</span>':'<span class="status resolved">Ativa</span>'}</td><td><button class="btn secondary small" onclick="toggleRoute('${escapeHTML(r.docId)}',${r.active===false?'true':'false'})">${r.active===false?'Reativar':'Desativar'}</button></td></tr>`).join('')}</tbody></table>`}
+async function toggleRoute(docId,makeActive){const r=db.routes.find(x=>x.docId===docId);if(!r)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} a rota ${r.number} — ${r.name}? O registro será preservado no histórico.`))return;try{await fb.updateDoc(fb.doc(firestore,'routes',docId),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();populateRouteSelects();renderRoutesTable();renderHome();}catch(err){alert(humanFirebaseError(err))}}
 function renderStops(){document.getElementById('stopsTable').innerHTML=`<table><thead><tr><th>Rota</th><th>Parada</th><th>Horário</th></tr></thead><tbody>${db.routes.flatMap(r=>(r.stops||[]).map(s=>`<tr><td>${escapeHTML(r.number+' — '+r.name)}</td><td>${escapeHTML(s.name)}</td><td>${escapeHTML(s.time)}</td></tr>`)).join('')}</tbody></table>`}
 async function addDriver(){const name=document.getElementById('driverName').value.trim(),phone=document.getElementById('driverPhone').value.trim(),cnh=document.getElementById('driverCnh').value.trim(),routeId=document.getElementById('driverRouteId').value;if(!name)return alert('Informe o nome.');if(!routeId)return alert('Selecione a rota do motorista.');const id=uid(),driver={id,name,phone,cnh,vehicle:'Não informado',routeId:routeId?Number(routeId):null,active:true},driverPublic={id,name,vehicle:driver.vehicle,routeId:driver.routeId,active:true};try{const batch=fb.writeBatch(firestore);batch.set(fb.doc(firestore,'drivers',String(id)),driver);batch.set(fb.doc(firestore,'driverPublic',String(id)),driverPublic);await batch.commit();['driverName','driverPhone','driverCnh'].forEach(x=>document.getElementById(x).value='');await loadData();renderDrivers();alert('Motorista cadastrado. Dados privados e públicos foram separados.')}catch(err){alert(humanFirebaseError(err))}}
-function renderDrivers(){document.getElementById('driversTable').innerHTML=`<table><thead><tr><th>Nome</th><th>Telefone</th><th>CNH</th><th>Rota</th></tr></thead><tbody>${db.drivers.map(d=>{const r=routeById(d.routeId);return `<tr><td>${escapeHTML(d.name)}</td><td>${escapeHTML(d.phone||'')}</td><td>${escapeHTML(d.cnh||'')}</td><td>${r?escapeHTML(r.number+' — '+r.name):'Não definida'}</td></tr>`}).join('')||'<tr><td colspan="4">Nenhum motorista cadastrado.</td></tr>'}</tbody></table>`}
+function renderDrivers(){document.getElementById('driversTable').innerHTML=`<table><thead><tr><th>Nome</th><th>Telefone</th><th>CNH</th><th>Rota</th><th>Status</th><th>Ação</th></tr></thead><tbody>${db.drivers.map(d=>{const r=routeById(d.routeId);return `<tr><td>${escapeHTML(d.name)}</td><td>${escapeHTML(d.phone||'')}</td><td>${escapeHTML(d.cnh||'')}</td><td>${r?escapeHTML(r.number+' — '+r.name):'Não definida'}</td><td>${d.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</td><td><button class="btn secondary small" onclick="toggleDriver('${escapeHTML(d.docId)}',${d.active===false?'true':'false'})">${d.active===false?'Reativar':'Desativar'}</button></td></tr>`}).join('')||'<tr><td colspan="6">Nenhum motorista cadastrado.</td></tr>'}</tbody></table>`}
+async function toggleDriver(docId,makeActive){const d=db.drivers.find(x=>x.docId===docId);if(!d)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} o cadastro de ${d.name}? O registro será preservado.`))return;try{const now=new Date().toISOString(),batch=fb.writeBatch(firestore);batch.update(fb.doc(firestore,'drivers',docId),{active:makeActive,updatedAt:now});batch.set(fb.doc(firestore,'driverPublic',docId),{id:d.id,name:d.name,vehicle:d.vehicle||'Não informado',routeId:Number(d.routeId),active:makeActive,updatedAt:now},{merge:true});await batch.commit();await loadData();renderDrivers();renderHome();}catch(err){alert(humanFirebaseError(err))}}
 async function migrateDriverPublicData(){
  if(currentUser.role!=='admin')return;
  const box=document.getElementById('driverMigrationResult');
@@ -602,7 +645,8 @@ async function migrateDriverPublicData(){
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
 }
 async function addNotification(){if(currentUser.role!=='admin')return;const title=document.getElementById('noticeTitle').value.trim(),type=document.getElementById('noticeType').value,text=document.getElementById('noticeText').value.trim(),target=document.getElementById('noticeRoute').value;if(!title||!text)return alert('Preencha título e mensagem.');const id=uid(),n={id,title,type,text,date:new Date().toISOString(),active:true,routeId:target==='all'?null:Number(target),author:currentUser.displayName,authorUid:currentUser.uid};try{await fb.setDoc(fb.doc(firestore,'notifications',String(id)),n);markCurrentNoticeRead(id);document.getElementById('noticeTitle').value='';document.getElementById('noticeText').value='';await loadData();renderAdminNoticeHistory();updateNoticeBadge();renderHome();alert('Aviso publicado.')}catch(err){alert(humanFirebaseError(err))}}
-function renderAdminNoticeHistory(){const box=document.getElementById('adminNoticeHistory');if(!box)return;box.innerHTML='<h3 style="color:var(--blue);margin-bottom:12px">Histórico de comunicados</h3>'+db.notifications.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(n=>{const r=n.routeId?routeById(n.routeId):null;return `<div class="notification"><strong>${escapeHTML(n.title)}</strong><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${new Date(n.date).toLocaleString('pt-BR')} • ${escapeHTML(n.author||'SIRE')} • ${r?'Rota '+escapeHTML(r.number):'Geral'}</span></div>`}).join('')}
+function renderAdminNoticeHistory(){const box=document.getElementById('adminNoticeHistory');if(!box)return;box.innerHTML='<h3 style="color:var(--blue);margin-bottom:12px">Histórico de comunicados</h3>'+db.notifications.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(n=>{const r=n.routeId?routeById(n.routeId):null;return `<div class="notification"><div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><strong>${escapeHTML(n.title)}</strong>${n.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</div><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${new Date(n.date).toLocaleString('pt-BR')} • ${escapeHTML(n.author||'SIRE')} • ${r?'Rota '+escapeHTML(r.number):'Geral'}</span><div style="margin-top:9px"><button class="btn secondary small" onclick="toggleNotification('${escapeHTML(n.docId)}',${n.active===false?'true':'false'})">${n.active===false?'Reativar':'Desativar'}</button></div></div>`}).join('')}
+async function toggleNotification(docId,makeActive){const n=db.notifications.find(x=>x.docId===docId);if(!n)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} o aviso “${n.title}”? O registro será preservado.`))return;try{await fb.updateDoc(fb.doc(firestore,'notifications',docId),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();renderAdminNoticeHistory();updateNoticeBadge();renderHome();}catch(err){alert(humanFirebaseError(err))}}
 function renderReports(){const types={};db.feedbacks.forEach(f=>types[f.tipo]=(types[f.tipo]||0)+1);const routes={};db.feedbacks.forEach(f=>{const r=routeById(f.routeId);if(r)routes[r.name]=(routes[r.name]||0)+1});document.getElementById('reportContent').innerHTML=`<div class="stats"><div class="kpi"><span>Total de feedbacks</span><strong>${db.feedbacks.length}</strong></div><div class="kpi"><span>Em aberto</span><strong>${db.feedbacks.filter(f=>f.status!=='Resolvido').length}</strong></div><div class="kpi"><span>Resolvidos</span><strong>${db.feedbacks.filter(f=>f.status==='Resolvido').length}</strong></div><div class="kpi"><span>Contas</span><strong>${db.users.length}</strong></div></div><div class="cards" style="margin-top:18px"><div class="card"><h3>Feedbacks por tipo</h3>${Object.entries(types).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div><div class="card"><h3>Ocorrências por rota</h3>${Object.entries(routes).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div></div>`}
 
 /* CONTAS — versão Spark: Authentication é criado manualmente no Console.
@@ -622,8 +666,8 @@ async function createAccount(){
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
 }
 async function loadAccounts(){try{await loadData();renderAccounts()}catch(err){document.getElementById('accountResult').innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}}
-function renderAccounts(){const box=document.getElementById('accountsTable');if(!box)return;const rows=db.users.slice().sort((a,b)=>String(a.displayName||a.email).localeCompare(String(b.displayName||b.email),'pt-BR')).map(u=>{const r=routeById(u.routeId);const created=u.createdAt?new Date(u.createdAt).toLocaleDateString('pt-BR'):'-';return `<tr><td>${escapeHTML(u.displayName||'-')}</td><td>${escapeHTML(u.email||'-')}</td><td>${escapeHTML(roleLabel(u.role))}</td><td>${r?escapeHTML(r.number+' — '+r.name):(u.role==='admin'?'Todas':'-')}</td><td>${u.active===false?'<span class="status analysis">Desativada</span>':'<span class="status resolved">Ativa</span>'}</td><td>${created}</td><td>${u.docId===currentUser.uid?'Conta atual':`<button class="btn secondary small" onclick="toggleAccount('${u.docId}',${u.active===false?'true':'false'})">${u.active===false?'Reativar':'Desativar no SIRE'}</button>`}</td></tr>`}).join('');box.innerHTML=`<div style="overflow:auto"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Rota</th><th>Status</th><th>Criada em</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="7">Nenhuma conta encontrada.</td></tr>'}</tbody></table></div><p class="muted" style="margin-top:10px"><strong>Importante:</strong> “Desativar no SIRE” bloqueia o acesso aos dados pelas Security Rules, mas não apaga/desativa o registro em Authentication. Para bloquear também o login no Firebase, desative a conta manualmente em Authentication → Users.</p>`}
-async function toggleAccount(targetUid,makeActive){const u=db.users.find(x=>x.docId===targetUid);if(!u)return;if(!confirm(`${makeActive?'Reativar':'Desativar no SIRE'} a conta de ${u.displayName||u.email}?`))return;try{await fb.updateDoc(fb.doc(firestore,'users',targetUid),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();renderAccounts();renderHome()}catch(err){alert(humanFirebaseError(err))}}
+function renderAccounts(){const box=document.getElementById('accountsTable');if(!box)return;const rows=db.users.slice().sort((a,b)=>String(a.displayName||a.email).localeCompare(String(b.displayName||b.email),'pt-BR')).map(u=>{const r=routeById(u.routeId);const created=u.createdAt?new Date(u.createdAt).toLocaleDateString('pt-BR'):'-';return `<tr><td>${escapeHTML(u.displayName||'-')}</td><td>${escapeHTML(u.email||'-')}</td><td>${escapeHTML(roleLabel(u.role))}</td><td>${r?escapeHTML(r.number+' — '+r.name):(u.role==='admin'?'Todas':'-')}</td><td>${u.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</td><td>${created}</td><td>${u.docId===currentUser.uid?'Conta atual':`<button class="btn secondary small" onclick="toggleAccount('${u.docId}',${u.active===false?'true':'false'})">${u.active===false?'Reativar':'Desativar'}</button>`}</td></tr>`}).join('');box.innerHTML=`<div style="overflow:auto"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Rota</th><th>Status</th><th>Criada em</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="7">Nenhuma conta encontrada.</td></tr>'}</tbody></table></div><p class="muted" style="margin-top:10px"><strong>Importante:</strong> O status “Inativo” bloqueia o acesso aos dados pelas Security Rules, mas não apaga/desativa o registro em Authentication. Para bloquear também o login no Firebase, desative a conta manualmente em Authentication → Users.</p>`}
+async function toggleAccount(targetUid,makeActive){const u=db.users.find(x=>x.docId===targetUid);if(!u)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} a conta de ${u.displayName||u.email}?`))return;try{await fb.updateDoc(fb.doc(firestore,'users',targetUid),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();renderAccounts();renderHome()}catch(err){alert(humanFirebaseError(err))}}
 
 async function seedInitialData(){
  const box=document.getElementById('seedResult');box.innerHTML='<div class="alert info">Verificando o banco...</div>';
@@ -641,7 +685,7 @@ async function seedInitialData(){
    {id:1002,name:'Roberto Silva',phone:'(85) 98888-1010',cnh:'000000101',vehicle:'Ônibus 18',routeId:101,active:true},
    {id:1003,name:'João Pereira',phone:'(85) 98888-1020',cnh:'000000102',vehicle:'Ônibus 21',routeId:102,active:true}
   ];
-  const notice={id:1,title:'SIRE em funcionamento',type:'Aviso importante',text:'O SIRE está disponível para consulta de rotas e registro de ocorrências.',date:new Date().toISOString(),active:true,routeId:null,author:'Coordenação SIRE',authorUid:currentUser.uid};
+  const notice={id:1,title:'SIRE em funcionamento',type:'Aviso importante',text:'O SIRE está disponível para consulta de rotas e registro de ocorrências.',date:new Date().toISOString(),active:true,routeId:null,author:currentUser.displayName,authorUid:currentUser.uid};
   routes.forEach(x=>batch.set(fb.doc(firestore,'routes',String(x.id)),x));drivers.forEach(x=>{batch.set(fb.doc(firestore,'drivers',String(x.id)),x);batch.set(fb.doc(firestore,'driverPublic',String(x.id)),{id:x.id,name:x.name,vehicle:x.vehicle,routeId:x.routeId,active:x.active});});batch.set(fb.doc(firestore,'notifications','1'),notice);await batch.commit();
   box.innerHTML='<div class="alert success">Dados iniciais cadastrados no Firestore.</div>';await loadData();refreshAdmin();renderHome();
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
