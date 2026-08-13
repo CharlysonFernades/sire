@@ -230,6 +230,13 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
             <div><label>E-mail de acesso</label><input id="accountEmail" type="email" maxlength="160" placeholder="Mesmo e-mail criado no Authentication"></div>
             <div><label>Perfil</label><select id="accountRole" onchange="configureAccountRole()"><option value="student">Aluno</option><option value="driver">Motorista</option><option value="admin">Administrador</option></select></div>
             <div><label>Rota vinculada</label><select id="accountRoute"></select></div>
+            <div id="accountDriverFields" class="full hidden">
+              <div class="form-grid">
+                <div><label>Telefone do motorista</label><input id="accountDriverPhone" maxlength="30" inputmode="tel" placeholder="Telefone"></div>
+                <div><label>CNH do motorista</label><input id="accountDriverCnh" maxlength="40" placeholder="CNH"></div>
+              </div>
+              <p class="muted" style="margin-top:8px">Ao vincular uma conta como Motorista, o SIRE também cria ou sincroniza automaticamente o cadastro em Motoristas. Se a CNH já existir, o registro é atualizado em vez de duplicado.</p>
+            </div>
           </div>
           <div class="actions"><button class="btn" onclick="createAccount()">Vincular conta ao SIRE</button><button class="btn secondary" onclick="loadAccounts()">Atualizar lista</button></div>
           <div id="accountResult"></div>
@@ -678,18 +685,45 @@ function renderReports(){const types={};db.feedbacks.forEach(f=>types[f.tipo]=(t
 
 /* CONTAS — versão Spark: Authentication é criado manualmente no Console.
    O painel abaixo apenas vincula o UID existente a um perfil protegido do SIRE. */
-function configureAccountRole(){const role=document.getElementById('accountRole')?.value,route=document.getElementById('accountRoute');if(!route)return;route.disabled=role==='admin';if(role==='admin')route.value=''}
+function configureAccountRole(){
+ const role=document.getElementById('accountRole')?.value,route=document.getElementById('accountRoute'),driverFields=document.getElementById('accountDriverFields'),phone=document.getElementById('accountDriverPhone'),cnh=document.getElementById('accountDriverCnh');
+ if(route){route.disabled=role==='admin';if(role==='admin')route.value=''}
+ if(driverFields)driverFields.classList.toggle('hidden',role!=='driver');
+ if(phone)phone.required=role==='driver';
+ if(cnh)cnh.required=role==='driver';
+ if(role!=='driver'){if(phone)phone.value='';if(cnh)cnh.value=''}
+}
 async function createAccount(){
  if(currentUser.role!=='admin')return;
- const box=document.getElementById('accountResult'),uidValue=document.getElementById('accountUid').value.trim(),displayName=document.getElementById('accountName').value.trim(),email=document.getElementById('accountEmail').value.trim().toLowerCase(),role=document.getElementById('accountRole').value,routeValue=document.getElementById('accountRoute').value;
+ const box=document.getElementById('accountResult'),uidValue=document.getElementById('accountUid').value.trim(),displayName=document.getElementById('accountName').value.trim(),email=document.getElementById('accountEmail').value.trim().toLowerCase(),role=document.getElementById('accountRole').value,routeValue=document.getElementById('accountRoute').value,driverPhone=document.getElementById('accountDriverPhone')?.value.trim()||'',driverCnh=document.getElementById('accountDriverCnh')?.value.trim()||'';
  if(!uidValue||!displayName||!email)return box.innerHTML='<div class="alert error">Preencha UID, nome e e-mail.</div>';
  if(role!=='admin'&&!routeValue)return box.innerHTML='<div class="alert error">Aluno e Motorista precisam de uma rota.</div>';
+ if(role==='driver'&&(!driverPhone||!driverCnh))return box.innerHTML='<div class="alert error">Para contas de Motorista, preencha telefone e CNH.</div>';
  if(db.users.some(u=>u.docId===uidValue))return box.innerHTML='<div class="alert error">Este UID já possui um perfil no SIRE.</div>';
  box.innerHTML='<div class="alert info">Vinculando perfil ao UID existente...</div>';
  try{
-  await fb.setDoc(fb.doc(firestore,'users',uidValue),{displayName,email,role,routeId:role==='admin'?null:Number(routeValue),active:true,createdAt:new Date().toISOString(),createdBy:currentUser.uid});
-  box.innerHTML=`<div class="alert success"><strong>Perfil vinculado.</strong><br>${escapeHTML(email)} • ${escapeHTML(roleLabel(role))}<br>O login/senha continuam sendo administrados no Firebase Authentication.</div>`;
-  ['accountUid','accountName','accountEmail'].forEach(x=>document.getElementById(x).value='');await loadData();renderAccounts();renderHome();
+  const now=new Date().toISOString(),batch=fb.writeBatch(firestore);
+  batch.set(fb.doc(firestore,'users',uidValue),{displayName,email,role,routeId:role==='admin'?null:Number(routeValue),active:true,createdAt:now,createdBy:currentUser.uid});
+  let driverMessage='';
+  if(role==='driver'){
+   const normalizedCnh=driverCnh.toLowerCase(),existingDriver=db.drivers.find(d=>String(d.cnh||'').trim().toLowerCase()===normalizedCnh);
+   if(existingDriver){
+    const driverId=Number(existingDriver.id),vehicle=String(existingDriver.vehicle||'Não informado'),driverDocId=existingDriver.docId;
+    batch.update(fb.doc(firestore,'drivers',driverDocId),{name:displayName,phone:driverPhone,cnh:driverCnh,routeId:Number(routeValue),active:true,updatedAt:now});
+    batch.set(fb.doc(firestore,'driverPublic',driverDocId),{id:driverId,name:displayName,vehicle,routeId:Number(routeValue),active:true,updatedAt:now},{merge:true});
+    driverMessage='<br>O motorista já existia e foi sincronizado sem duplicar o cadastro.';
+   }else{
+    const driverId=uid(),driver={id:driverId,name:displayName,phone:driverPhone,cnh:driverCnh,vehicle:'Não informado',routeId:Number(routeValue),active:true},driverPublic={id:driverId,name:displayName,vehicle:'Não informado',routeId:Number(routeValue),active:true};
+    batch.set(fb.doc(firestore,'drivers',String(driverId)),driver);
+    batch.set(fb.doc(firestore,'driverPublic',String(driverId)),driverPublic);
+    driverMessage='<br>Cadastro do motorista criado automaticamente em Motoristas.';
+   }
+  }
+  await batch.commit();
+  box.innerHTML=`<div class="alert success"><strong>Perfil vinculado.</strong><br>${escapeHTML(email)} • ${escapeHTML(roleLabel(role))}${driverMessage}<br>O login/senha continuam sendo administrados no Firebase Authentication.</div>`;
+  ['accountUid','accountName','accountEmail','accountDriverPhone','accountDriverCnh'].forEach(x=>{const el=document.getElementById(x);if(el)el.value=''});
+  document.getElementById('accountRole').value='student';configureAccountRole();
+  await loadData();renderAccounts();renderDrivers();renderHome();
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
 }
 async function loadAccounts(){try{await loadData();renderAccounts()}catch(err){document.getElementById('accountResult').innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}}
