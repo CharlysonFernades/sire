@@ -295,6 +295,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin=""></script>
 <script src="./firebase-config.js"></script>
+<script src="./appcheck-config.js"></script>
 <script>
 /* ==========================================================
    SIRE V5.4 SEGURANÇA — Firebase Spark / GitHub Pages
@@ -306,7 +307,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
    - Login: botão Mostrar/Ocultar senha (somente visual, sem armazenar a senha)
 ========================================================== */
 const FIREBASE_SDK_VERSION='12.17.1';
-let fb={},auth=null,firestore=null;
+let fb={},auth=null,firestore=null,appCheck=null;
 let currentUser=null;
 let firebaseReady=false;
 let db={routes:[],feedbacks:[],drivers:[],notifications:[],users:[]};
@@ -329,8 +330,34 @@ async function initFirebase(){
   const appMod=await import(`${base}/firebase-app.js`);
   const authMod=await import(`${base}/firebase-auth.js`);
   const fsMod=await import(`${base}/firebase-firestore.js`);
-  fb={...appMod,...authMod,...fsMod};
+  const appCheckMod=await import(`${base}/firebase-app-check.js`);
+  fb={...appMod,...authMod,...fsMod,...appCheckMod};
   const app=fb.initializeApp(window.SIRE_FIREBASE_CONFIG);
+
+  // App Check vem antes de Authentication e Firestore.
+  // Enquanto o enforcement estiver desligado, uma eventual falha de atestação
+  // é registrada no Console sem derrubar o login do protótipo.
+  const appCheckCfg=window.SIRE_APPCHECK_CONFIG||{};
+  const appCheckSiteKey=String(appCheckCfg.siteKey||'').trim();
+  const appCheckConfigured=appCheckCfg.enabled!==false
+    && appCheckSiteKey
+    && appCheckSiteKey!=='COLE_AQUI_SUA_CHAVE_RECAPTCHA_ENTERPRISE'
+    && appCheckSiteKey!=='COLE_AQUI_A_CHAVE_DO_SITE';
+
+  if(appCheckConfigured){
+   try{
+    appCheck=fb.initializeAppCheck(app,{
+     provider:new fb.ReCaptchaEnterpriseProvider(appCheckSiteKey),
+     isTokenAutoRefreshEnabled:true
+    });
+    console.info('SIRE App Check: inicializado com reCAPTCHA Enterprise.');
+   }catch(appCheckErr){
+    console.error('SIRE App Check: falha ao inicializar.',appCheckErr);
+   }
+  }else{
+   console.warn('SIRE App Check: configuração ausente. NÃO habilite enforcement ainda.');
+  }
+
   auth=fb.getAuth(app);firestore=fb.getFirestore(app);
   await fb.setPersistence(auth,fb.browserSessionPersistence);
   firebaseReady=true;
