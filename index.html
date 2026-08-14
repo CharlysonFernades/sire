@@ -136,6 +136,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
     </div>
     <div id="searchResults" class="search-results"></div>
     <div id="routeSummary" class="route-info"></div>
+    <div id="routeSchedule" class="panel" style="margin-top:18px"></div>
     <div id="map"></div>
     <div class="actions"><button class="btn" onclick="locateUser()">📍 Minha localização</button><button class="btn secondary" onclick="showPage('ajuda');openFeedback()">💬 Informar ocorrência</button></div>
   </div>
@@ -248,13 +249,13 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
       <section class="admin-section" id="admin-paradas"><div class="panel"><h3 style="color:var(--blue)">Paradas</h3><p class="muted">As paradas da demonstração são pré-cadastradas por rota.</p><div id="stopsTable" style="margin-top:18px"></div></div></section>
       <section class="admin-section" id="admin-motoristas"><div class="panel"><h3 style="color:var(--blue)">Motoristas</h3><div class="alert info"><strong>Privacidade:</strong> telefone e CNH ficam na coleção administrativa <code>drivers</code>. Alunos e motoristas recebem somente nome, veículo e rota pela coleção <code>driverPublic</code>.</div><div class="form-grid" style="margin:15px 0"><input id="driverName" placeholder="Nome"><input id="driverPhone" placeholder="Telefone"><input id="driverCnh" placeholder="CNH"><select id="driverRouteId" class="full"></select></div><div class="actions"><button class="btn" onclick="addDriver()">Cadastrar motorista</button><button class="btn secondary" onclick="migrateDriverPublicData()">Sincronizar dados públicos dos motoristas</button></div><div id="driverMigrationResult"></div><div id="driversTable" style="margin-top:18px"></div></div></section>
       <section class="admin-section" id="admin-notificacoes"><div class="panel"><h3 style="color:var(--blue)">Publicar aviso</h3><div class="form-grid" style="margin:15px 0"><input id="noticeTitle" placeholder="Título"><select id="noticeType"><option>Atraso</option><option>Mudança de rota</option><option>Aviso importante</option><option>Atualização operacional</option></select><select id="noticeRoute" class="full"></select><textarea id="noticeText" class="full" placeholder="Mensagem"></textarea></div><button class="btn" onclick="addNotification()">Publicar</button><div id="adminNoticeHistory" style="margin-top:20px"></div></div></section>
-      <section class="admin-section" id="admin-relatorios"><div class="panel"><h3 style="color:var(--blue)">Relatórios estatísticos</h3><div id="reportContent" style="margin-top:15px"></div></div></section>
+      <section class="admin-section" id="admin-relatorios"><div class="panel"><h3 style="color:var(--blue)">Relatórios estatísticos</h3><p class="muted">Indicadores operacionais e quantidade de alunos cadastrados por rota.</p><div id="reportContent" style="margin-top:15px"></div></div></section>
     </main>
   </div>
 </div>
 </main>
 
-<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.2 Spark: autenticação, banco compartilhado e permissões por perfil.</p></footer>
+<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.6 Spark: segurança V5.4 preservada, horários em Rotas e indicadores de alunos por rota.</p></footer>
 </div>
 
 <!-- POP-UP RESUMIDO DE AVISOS -->
@@ -305,12 +306,13 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
 <script src="./appcheck-config.js"></script>
 <script>
 /* ==========================================================
-   SIRE V5.4 SEGURANÇA — Firebase Spark / GitHub Pages
+   SIRE V5.6 — Firebase Spark / GitHub Pages
    - Firebase Authentication (e-mail e senha)
    - Cloud Firestore (dados compartilhados)
    - Sem Cloud Functions: compatível com a arquitetura Spark proposta
    - Perfis lidos do Firestore; nunca escolhidos pelo usuário no navegador
    - V5.4: esquema de campos restrito, histórico protegido e status Ativo/Inativo
+   - V5.6: horários visíveis em Rotas + filtro administrativo de alunos por rota
    - Login: botão Mostrar/Ocultar senha (somente visual, sem armazenar a senha)
 ========================================================== */
 const FIREBASE_SDK_VERSION='12.17.1';
@@ -527,7 +529,9 @@ function initMap(){if(map)return;map=L.map('map').setView([-3.7216,-38.6530],12)
 function renderRoute(){
  let id=currentUser.role==='admin'?document.getElementById('routeSelect').value:currentUser.routeId;const r=routeById(id);if(!r)return;const day=document.getElementById('daySelect').value,d=driverByRoute(r.id),stops=Array.isArray(r.stops)?r.stops:[];
  document.getElementById('routeSummary').innerHTML=`<div><strong>Rota</strong><br>${escapeHTML(r.number)} — ${escapeHTML(r.name)}</div><div><strong>Escola</strong><br>${escapeHTML(r.school)}</div><div><strong>Paradas</strong><br>${stops.length}</div><div><strong>Operação</strong><br>${escapeHTML(day)} • ${r.active?'Ativa':'Inativa'}</div><div><strong>Motorista</strong><br>${d?escapeHTML(d.name):'Não informado'}</div><div><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div>`;
- initMap();markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine){map.removeLayer(routeLine);routeLine=null}const bounds=[];stops.forEach((s,i)=>{const m=L.marker([s.lat,s.lng]).addTo(map).bindPopup(`<strong>${escapeHTML(s.name)}</strong><br>Horário previsto: ${escapeHTML(s.time)}<br>Ordem: ${i+1}`);markers.push(m);bounds.push([s.lat,s.lng])});if(bounds.length){routeLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(map);map.fitBounds(bounds,{padding:[30,30]})}setTimeout(()=>map.invalidateSize(),60);
+ const scheduleBox=document.getElementById('routeSchedule');
+ if(scheduleBox){scheduleBox.innerHTML=`<h3 style="color:var(--blue)">⏱️ Horários previstos das paradas</h3><p class="muted" style="margin:6px 0 12px">Horários cadastrados para ${escapeHTML(day)}. Consulte também os avisos da rota para possíveis alterações.</p>${stops.length?`<div style="overflow:auto"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário previsto</th></tr></thead><tbody>${stops.map((st,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(st.name||'-')}</td><td><strong>${escapeHTML(st.time||'Não informado')}</strong></td></tr>`).join('')}</tbody></table></div>`:'<div class="alert info">Nenhuma parada com horário cadastrada para esta rota.</div>'}`;}
+ initMap();markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine){map.removeLayer(routeLine);routeLine=null}const bounds=[];stops.forEach((st,i)=>{if(typeof st.lat!=='number'||typeof st.lng!=='number')return;const m=L.marker([st.lat,st.lng]).addTo(map).bindPopup(`<strong>${escapeHTML(st.name)}</strong><br>Horário previsto: ${escapeHTML(st.time)}<br>Ordem: ${i+1}`);markers.push(m);bounds.push([st.lat,st.lng])});if(bounds.length){routeLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(map);map.fitBounds(bounds,{padding:[30,30]})}setTimeout(()=>map.invalidateSize(),60);
 }
 function selectRoute(id){document.getElementById('routeSelect').value=id;renderRoute()}
 function searchRoutes(){if(currentUser.role!=='admin')return;const q=document.getElementById('routeSearch').value.trim().toLowerCase(),box=document.getElementById('searchResults');if(!q){box.innerHTML='';return}const matches=db.routes.filter(r=>[r.number,r.name,r.school,...(r.stops||[]).map(s=>s.name)].join(' ').toLowerCase().includes(q));box.innerHTML=matches.length?matches.map(r=>`<div class="result" onclick="selectRoute('${r.id}')"><strong>Rota ${escapeHTML(r.number)} — ${escapeHTML(r.name)}</strong><br><span class="muted">${escapeHTML(r.school)} • ${(r.stops||[]).length} paradas</span></div>`).join(''):'<div class="alert info">Nenhuma rota encontrada.</div>'}
@@ -681,7 +685,28 @@ async function migrateDriverPublicData(){
 async function addNotification(){if(currentUser.role!=='admin')return;const title=document.getElementById('noticeTitle').value.trim(),type=document.getElementById('noticeType').value,text=document.getElementById('noticeText').value.trim(),target=document.getElementById('noticeRoute').value;if(!title||!text)return alert('Preencha título e mensagem.');const id=uid(),n={id,title,type,text,date:new Date().toISOString(),active:true,routeId:target==='all'?null:Number(target),author:currentUser.displayName,authorUid:currentUser.uid};try{await fb.setDoc(fb.doc(firestore,'notifications',String(id)),n);markCurrentNoticeRead(id);document.getElementById('noticeTitle').value='';document.getElementById('noticeText').value='';await loadData();renderAdminNoticeHistory();updateNoticeBadge();renderHome();alert('Aviso publicado.')}catch(err){alert(humanFirebaseError(err))}}
 function renderAdminNoticeHistory(){const box=document.getElementById('adminNoticeHistory');if(!box)return;box.innerHTML='<h3 style="color:var(--blue);margin-bottom:12px">Histórico de comunicados</h3>'+db.notifications.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(n=>{const r=n.routeId?routeById(n.routeId):null;return `<div class="notification"><div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><strong>${escapeHTML(n.title)}</strong>${n.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</div><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${new Date(n.date).toLocaleString('pt-BR')} • ${escapeHTML(n.author||'SIRE')} • ${r?'Rota '+escapeHTML(r.number):'Geral'}</span><div style="margin-top:9px"><button class="btn secondary small" onclick="toggleNotification('${escapeHTML(n.docId)}',${n.active===false?'true':'false'})">${n.active===false?'Reativar':'Desativar'}</button></div></div>`}).join('')}
 async function toggleNotification(docId,makeActive){const n=db.notifications.find(x=>x.docId===docId);if(!n)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} o aviso “${n.title}”? O registro será preservado.`))return;try{await fb.updateDoc(fb.doc(firestore,'notifications',docId),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();renderAdminNoticeHistory();updateNoticeBadge();renderHome();}catch(err){alert(humanFirebaseError(err))}}
-function renderReports(){const types={};db.feedbacks.forEach(f=>types[f.tipo]=(types[f.tipo]||0)+1);const routes={};db.feedbacks.forEach(f=>{const r=routeById(f.routeId);if(r)routes[r.name]=(routes[r.name]||0)+1});document.getElementById('reportContent').innerHTML=`<div class="stats"><div class="kpi"><span>Total de feedbacks</span><strong>${db.feedbacks.length}</strong></div><div class="kpi"><span>Em aberto</span><strong>${db.feedbacks.filter(f=>f.status!=='Resolvido').length}</strong></div><div class="kpi"><span>Resolvidos</span><strong>${db.feedbacks.filter(f=>f.status==='Resolvido').length}</strong></div><div class="kpi"><span>Contas</span><strong>${db.users.length}</strong></div></div><div class="cards" style="margin-top:18px"><div class="card"><h3>Feedbacks por tipo</h3>${Object.entries(types).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div><div class="card"><h3>Ocorrências por rota</h3>${Object.entries(routes).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div></div>`}
+function getStudentRouteStats(routeFilter='all'){
+ const routeList=db.routes.filter(r=>routeFilter==='all'||String(r.id)===String(routeFilter));
+ return routeList.map(r=>{
+  const students=db.users.filter(u=>u.role==='student'&&String(u.routeId)===String(r.id));
+  const active=students.filter(u=>u.active!==false).length;
+  const inactive=students.filter(u=>u.active===false).length;
+  return {route:r,total:students.length,active,inactive};
+ });
+}
+function renderStudentRouteReport(){
+ const filter=document.getElementById('studentRouteFilter')?.value||'all',box=document.getElementById('studentRouteReport');if(!box)return;
+ const stats=getStudentRouteStats(filter),total=stats.reduce((sum,x)=>sum+x.total,0),active=stats.reduce((sum,x)=>sum+x.active,0);
+ box.innerHTML=`<div class="stats" style="margin:14px 0"><div class="kpi"><span>Alunos no filtro</span><strong>${total}</strong></div><div class="kpi"><span>Alunos ativos</span><strong>${active}</strong></div></div><div style="overflow:auto"><table><thead><tr><th>Rota</th><th>Nome</th><th>Alunos ativos</th><th>Inativos</th><th>Total cadastrado</th></tr></thead><tbody>${stats.map(x=>`<tr><td>${escapeHTML(x.route.number)}</td><td>${escapeHTML(x.route.name)}</td><td>${x.active}</td><td>${x.inactive}</td><td><strong>${x.total}</strong></td></tr>`).join('')||'<tr><td colspan="5">Nenhuma rota encontrada.</td></tr>'}</tbody></table></div>`;
+}
+function renderReports(){
+ const types={};db.feedbacks.forEach(f=>types[f.tipo]=(types[f.tipo]||0)+1);
+ const routes={};db.feedbacks.forEach(f=>{const r=routeById(f.routeId);if(r)routes[r.name]=(routes[r.name]||0)+1});
+ const studentTotal=db.users.filter(u=>u.role==='student').length,studentActive=db.users.filter(u=>u.role==='student'&&u.active!==false).length;
+ const routeOptions=db.routes.map(r=>`<option value="${escapeHTML(String(r.id))}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}</option>`).join('');
+ document.getElementById('reportContent').innerHTML=`<div class="stats"><div class="kpi"><span>Total de feedbacks</span><strong>${db.feedbacks.length}</strong></div><div class="kpi"><span>Em aberto</span><strong>${db.feedbacks.filter(f=>f.status!=='Resolvido').length}</strong></div><div class="kpi"><span>Alunos cadastrados</span><strong>${studentTotal}</strong></div><div class="kpi"><span>Alunos ativos</span><strong>${studentActive}</strong></div></div><div class="panel" style="margin-top:18px;padding:18px"><h3 style="color:var(--blue)">🎓 Alunos por rota</h3><p class="muted">O relatório considera somente contas com perfil Aluno. Use o filtro para consultar uma rota específica.</p><div class="form-grid" style="margin-top:12px"><div><label>Filtrar por rota</label><select id="studentRouteFilter" onchange="renderStudentRouteReport()"><option value="all">Todas as rotas</option>${routeOptions}</select></div></div><div id="studentRouteReport"></div></div><div class="cards" style="margin-top:18px"><div class="card"><h3>Feedbacks por tipo</h3>${Object.entries(types).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div><div class="card"><h3>Ocorrências por rota</h3>${Object.entries(routes).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div></div>`;
+ renderStudentRouteReport();
+}
 
 /* CONTAS — versão Spark: Authentication é criado manualmente no Console.
    O painel abaixo apenas vincula o UID existente a um perfil protegido do SIRE. */
