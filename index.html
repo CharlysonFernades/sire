@@ -96,7 +96,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
 <header>
   <div class="logo">SIRE</div>
   <nav>
-    <button onclick="showPage('inicio')">Início</button>
+    <button id="homeBackButton" onclick="handleHomeBack()">Início</button>
     <button onclick="showPage('ajuda')">Ajuda</button>
   </nav>
   <div class="top-right">
@@ -138,6 +138,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
     <div id="routeSummary" class="route-info"></div>
     <div id="routeSchedule" class="panel" style="margin-top:18px"></div>
     <div id="map"></div>
+    <div id="routeMapProviderNote" class="muted" style="margin-top:9px"></div>
     <div class="actions"><button class="btn" onclick="locateUser()">📍 Minha localização</button><button class="btn secondary" onclick="showPage('ajuda');openFeedback()">💬 Informar ocorrência</button></div>
   </div>
 </div>
@@ -186,6 +187,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
   <div class="panel" style="margin-top:18px">
     <h3 style="color:var(--blue)">🗺️ Mapa da minha rota</h3>
     <div id="driverMap"></div>
+    <div id="driverMapProviderNote" class="muted" style="margin-top:9px"></div>
   </div>
   <div id="driverSchedule" class="panel" style="margin-top:18px"></div>
   <div id="driverNoticeForm" class="form-box" style="margin-top:18px">
@@ -255,7 +257,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
 </div>
 </main>
 
-<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.6 Spark: segurança V5.4 preservada, horários em Rotas e indicadores de alunos por rota.</p></footer>
+<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.7 Spark: segurança V5.4 preservada, navegação Voltar e rotas viárias com Google Maps Directions quando configurado.</p></footer>
 </div>
 
 <!-- POP-UP RESUMIDO DE AVISOS -->
@@ -304,6 +306,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
         crossorigin=""></script>
 <script src="./firebase-config.js"></script>
 <script src="./appcheck-config.js"></script>
+<script src="./google-maps-config.js"></script>
 <script>
 /* ==========================================================
    SIRE V5.6 — Firebase Spark / GitHub Pages
@@ -313,6 +316,7 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
    - Perfis lidos do Firestore; nunca escolhidos pelo usuário no navegador
    - V5.4: esquema de campos restrito, histórico protegido e status Ativo/Inativo
    - V5.6: horários visíveis em Rotas + filtro administrativo de alunos por rota
+   - V5.7: botão Início/Voltar dinâmico + integração opcional Google Maps Directions (draggable)
    - Login: botão Mostrar/Ocultar senha (somente visual, sem armazenar a senha)
 ========================================================== */
 const FIREBASE_SDK_VERSION='12.17.1';
@@ -479,10 +483,19 @@ async function loadData(){
 }
 
 /* NAVEGAÇÃO E DASHBOARD */
+function updateHomeBackButton(pageId){
+ const btn=document.getElementById('homeBackButton');if(!btn)return;
+ const atHome=pageId==='inicio';
+ btn.textContent=atHome?'Início':'← Voltar';
+ btn.title=atHome?'Página inicial':'Voltar ao início';
+ btn.setAttribute('aria-label',atHome?'Página inicial':'Voltar ao início');
+}
+function handleHomeBack(){showPage('inicio')}
 function showPage(id){
  if(!currentUser)return;if(id==='admin'&&currentUser.role!=='admin')return;if(id==='motorista'&&currentUser.role!=='driver')return;
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const page=document.getElementById(id);if(page)page.classList.add('active');
- if(id==='rotas')setTimeout(()=>{configureRouteControls();initMap();renderRoute()},60);if(id==='ajuda')configureFeedbackForm();if(id==='acompanhar')renderMyRequestsList();if(id==='admin')refreshAdmin();if(id==='motorista')setTimeout(()=>renderDriverPanel(),60);window.scrollTo({top:0,behavior:'smooth'});
+ updateHomeBackButton(id);
+ if(id==='rotas')setTimeout(()=>{configureRouteControls();renderRoute()},60);if(id==='ajuda')configureFeedbackForm();if(id==='acompanhar')renderMyRequestsList();if(id==='admin')refreshAdmin();if(id==='motorista')setTimeout(()=>renderDriverPanel(),60);window.scrollTo({top:0,behavior:'smooth'});
 }
 function renderHome(){
  const r=currentUser.routeId?routeById(currentUser.routeId):null;const d=r?driverByRoute(r.id):null;const unread=getUnreadNotifications().length;
@@ -524,18 +537,94 @@ function configureRouteControls(){
  populateRouteSelects();const toolbar=document.getElementById('routeToolbar'),search=document.getElementById('routeSearch'),select=document.getElementById('routeSelect');
  if(currentUser.role==='admin'){toolbar.classList.remove('restricted');search.classList.remove('hidden');select.classList.remove('hidden');document.getElementById('routesPageTitle').textContent='Rotas escolares';document.getElementById('routesPageSubtitle').textContent='Pesquise ou selecione uma rota para visualizar suas informações.';if(!select.value&&db.routes.length)select.value=db.routes[0].id}else{toolbar.classList.add('restricted');search.classList.add('hidden');select.classList.add('hidden');select.value=String(currentUser.routeId);document.getElementById('routesPageTitle').textContent='Minha rota';document.getElementById('routesPageSubtitle').textContent='Mapa, horários, paradas e motorista da rota vinculada à sua conta.'}
 }
-let map,markers=[],routeLine=null;
-function initMap(){if(map)return;map=L.map('map').setView([-3.7216,-38.6530],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map)}
-function renderRoute(){
+let map=null,markers=[],routeLine=null;
+let googleMapsLoadPromise=null,googleRouteMap=null,googleRouteDirectionsRenderer=null,googleRouteDirectionsService=null;
+let googleRouteUserMarker=null;
+function googleMapsConfigured(){
+ const c=window.SIRE_GOOGLE_MAPS_CONFIG||{},key=String(c.apiKey||'').trim();
+ return c.enabled!==false&&key&&key!=='COLE_AQUI_SUA_CHAVE_GOOGLE_MAPS';
+}
+function loadGoogleMaps(){
+ if(window.google?.maps?.DirectionsService&&window.google?.maps?.DirectionsRenderer)return Promise.resolve(true);
+ if(!googleMapsConfigured())return Promise.resolve(false);
+ if(googleMapsLoadPromise)return googleMapsLoadPromise;
+ googleMapsLoadPromise=new Promise((resolve)=>{
+  const cfg=window.SIRE_GOOGLE_MAPS_CONFIG||{};
+  const callback='__sireGoogleMapsReady';
+  const timer=setTimeout(()=>{console.warn('SIRE Google Maps: tempo de carregamento excedido; usando mapa de contingência.');resolve(false)},12000);
+  window[callback]=()=>{clearTimeout(timer);console.info('SIRE Google Maps: Maps JavaScript API carregada.');resolve(true);try{delete window[callback]}catch(_){}};
+  const script=document.createElement('script');
+  script.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(String(cfg.apiKey||'').trim())}&v=weekly&libraries=routes&loading=async&callback=${callback}`;
+  script.async=true;script.defer=true;
+  script.onerror=()=>{clearTimeout(timer);console.warn('SIRE Google Maps: falha ao carregar a API; usando mapa de contingência.');resolve(false)};
+  document.head.appendChild(script);
+ });
+ return googleMapsLoadPromise;
+}
+function validGeoStops(stops){return (stops||[]).filter(st=>Number.isFinite(Number(st.lat))&&Number.isFinite(Number(st.lng))).map(st=>({...st,lat:Number(st.lat),lng:Number(st.lng)}))}
+function clearLeafletRouteMap(){
+ if(map){try{map.remove()}catch(_){}map=null}markers=[];routeLine=null;
+}
+function initLeafletRouteMap(){
+ if(map)return;const el=document.getElementById('map');if(!el)return;el.innerHTML='';map=L.map('map').setView([-3.7216,-38.6530],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map)
+}
+function renderLeafletRoute(stops){
+ initLeafletRouteMap();if(!map)return;markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine){map.removeLayer(routeLine);routeLine=null}const bounds=[];
+ validGeoStops(stops).forEach((st,i)=>{const m=L.marker([st.lat,st.lng]).addTo(map).bindPopup(`<strong>${escapeHTML(st.name||'Parada')}</strong><br>Horário previsto: ${escapeHTML(st.time||'Não informado')}<br>Ordem: ${i+1}`);markers.push(m);bounds.push([st.lat,st.lng])});
+ if(bounds.length){routeLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(map);map.fitBounds(bounds,{padding:[30,30]})}setTimeout(()=>map?.invalidateSize(),60);
+ const note=document.getElementById('routeMapProviderNote');if(note)note.textContent='Mapa de contingência: configure o Google Maps para calcular o percurso real pelas vias.';
+}
+async function renderGoogleDirectionsRoute(stops){
+ const points=validGeoStops(stops),el=document.getElementById('map');if(points.length<2||!el)return false;
+ const ready=await loadGoogleMaps();if(!ready)return false;
+ clearLeafletRouteMap();el.innerHTML='';
+ const center={lat:points[0].lat,lng:points[0].lng};
+ googleRouteMap=new google.maps.Map(el,{center,zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:true});
+ googleRouteDirectionsService=new google.maps.DirectionsService();
+ googleRouteDirectionsRenderer=new google.maps.DirectionsRenderer({map:googleRouteMap,draggable:true,suppressMarkers:false,preserveViewport:false});
+ const request={
+  origin:center,
+  destination:{lat:points[points.length-1].lat,lng:points[points.length-1].lng},
+  waypoints:points.slice(1,-1).map(st=>({location:{lat:st.lat,lng:st.lng},stopover:true})),
+  travelMode:google.maps.TravelMode.DRIVING,
+  optimizeWaypoints:false,
+  provideRouteAlternatives:false
+ };
+ try{
+  const result=await googleRouteDirectionsService.route(request);
+  googleRouteDirectionsRenderer.setDirections(result);
+  const note=document.getElementById('routeMapProviderNote');if(note)note.textContent='Percurso calculado pelo Google Maps. Você pode arrastar a linha para explorar outro trajeto; o ajuste é apenas visual e não altera a rota salva no SIRE.';
+  return true;
+ }catch(err){console.warn('SIRE Google Maps Directions:',err);return false}
+}
+async function renderRouteMap(stops){
+ if(googleMapsConfigured()){
+  const ok=await renderGoogleDirectionsRoute(stops);if(ok)return;
+ }
+ renderLeafletRoute(stops);
+}
+async function renderRoute(){
  let id=currentUser.role==='admin'?document.getElementById('routeSelect').value:currentUser.routeId;const r=routeById(id);if(!r)return;const day=document.getElementById('daySelect').value,d=driverByRoute(r.id),stops=Array.isArray(r.stops)?r.stops:[];
  document.getElementById('routeSummary').innerHTML=`<div><strong>Rota</strong><br>${escapeHTML(r.number)} — ${escapeHTML(r.name)}</div><div><strong>Escola</strong><br>${escapeHTML(r.school)}</div><div><strong>Paradas</strong><br>${stops.length}</div><div><strong>Operação</strong><br>${escapeHTML(day)} • ${r.active?'Ativa':'Inativa'}</div><div><strong>Motorista</strong><br>${d?escapeHTML(d.name):'Não informado'}</div><div><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div>`;
  const scheduleBox=document.getElementById('routeSchedule');
- if(scheduleBox){scheduleBox.innerHTML=`<h3 style="color:var(--blue)">⏱️ Horários previstos das paradas</h3><p class="muted" style="margin:6px 0 12px">Horários cadastrados para ${escapeHTML(day)}. Consulte também os avisos da rota para possíveis alterações.</p>${stops.length?`<div style="overflow:auto"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário previsto</th></tr></thead><tbody>${stops.map((st,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(st.name||'-')}</td><td><strong>${escapeHTML(st.time||'Não informado')}</strong></td></tr>`).join('')}</tbody></table></div>`:'<div class="alert info">Nenhuma parada com horário cadastrada para esta rota.</div>'}`;}
- initMap();markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine){map.removeLayer(routeLine);routeLine=null}const bounds=[];stops.forEach((st,i)=>{if(typeof st.lat!=='number'||typeof st.lng!=='number')return;const m=L.marker([st.lat,st.lng]).addTo(map).bindPopup(`<strong>${escapeHTML(st.name)}</strong><br>Horário previsto: ${escapeHTML(st.time)}<br>Ordem: ${i+1}`);markers.push(m);bounds.push([st.lat,st.lng])});if(bounds.length){routeLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(map);map.fitBounds(bounds,{padding:[30,30]})}setTimeout(()=>map.invalidateSize(),60);
+ if(scheduleBox){scheduleBox.innerHTML=`<h3 style="color:var(--blue)">⏱️ Horários previstos das paradas</h3><p class="muted" style="margin:6px 0 12px">Horários cadastrados para ${escapeHTML(day)}. Consulte também os avisos da rota para possíveis alterações.</p>${stops.length?`<div style="overflow:auto"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Chegada prevista</th></tr></thead><tbody>${stops.map((st,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(st.name||'-')}</td><td><strong>${escapeHTML(st.time||'Não informado')}</strong></td></tr>`).join('')}</tbody></table></div>`:'<div class="alert info">Nenhuma parada com horário cadastrada para esta rota.</div>'}`;}
+ await renderRouteMap(stops);
 }
 function selectRoute(id){document.getElementById('routeSelect').value=id;renderRoute()}
 function searchRoutes(){if(currentUser.role!=='admin')return;const q=document.getElementById('routeSearch').value.trim().toLowerCase(),box=document.getElementById('searchResults');if(!q){box.innerHTML='';return}const matches=db.routes.filter(r=>[r.number,r.name,r.school,...(r.stops||[]).map(s=>s.name)].join(' ').toLowerCase().includes(q));box.innerHTML=matches.length?matches.map(r=>`<div class="result" onclick="selectRoute('${r.id}')"><strong>Rota ${escapeHTML(r.number)} — ${escapeHTML(r.name)}</strong><br><span class="muted">${escapeHTML(r.school)} • ${(r.stops||[]).length} paradas</span></div>`).join(''):'<div class="alert info">Nenhuma rota encontrada.</div>'}
-function locateUser(){if(!navigator.geolocation){alert('Seu navegador não oferece geolocalização.');return}navigator.geolocation.getCurrentPosition(pos=>{const{latitude,longitude}=pos.coords;initMap();map.setView([latitude,longitude],15);L.marker([latitude,longitude]).addTo(map).bindPopup('Sua localização aproximada').openPopup()},()=>alert('Não foi possível obter sua localização.'))}
+function locateUser(){
+ if(!navigator.geolocation){alert('Seu navegador não oferece geolocalização.');return}
+ navigator.geolocation.getCurrentPosition(pos=>{
+  const{latitude,longitude}=pos.coords;
+  if(googleRouteMap&&window.google?.maps){
+   const position={lat:latitude,lng:longitude};googleRouteMap.setCenter(position);googleRouteMap.setZoom(15);
+   if(googleRouteUserMarker)googleRouteUserMarker.setMap(null);
+   googleRouteUserMarker=new google.maps.Marker({position,map:googleRouteMap,title:'Sua localização aproximada'});
+  }else{
+   initLeafletRouteMap();map.setView([latitude,longitude],15);L.marker([latitude,longitude]).addTo(map).bindPopup('Sua localização aproximada').openPopup();
+  }
+ },()=>alert('Não foi possível obter sua localização.'))
+}
 
 /* AJUDA E PROTOCOLO */
 function configureFeedbackForm(){
@@ -614,8 +703,34 @@ function openNoticeDetail(id){const n=db.notifications.find(x=>String(x.id??x.do
 function closeModal(id){document.getElementById(id).classList.add('hidden')}function backdropClose(e,id){if(e.target.id===id)closeModal(id)}function markCurrentNoticeRead(id){const read=getReadSet();read.add(String(id));saveReadSet(read);updateNoticeBadge()}
 
 /* MOTORISTA */
-let driverMap,driverMarkers=[],driverLine=null;
-function renderDriverPanel(){if(currentUser.role!=='driver')return;const r=routeById(currentUser.routeId),d=driverByRoute(currentUser.routeId);if(!r)return;const stops=r.stops||[];document.getElementById('driverRouteSummary').innerHTML=`<div><strong>Rota</strong><br>${escapeHTML(r.number)} — ${escapeHTML(r.name)}</div><div><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div><div><strong>Paradas</strong><br>${stops.length}</div><div><strong>Chegada prevista</strong><br>${escapeHTML(stops[stops.length-1]?.time||'-')}</div>`;if(stops.length){if(!driverMap){driverMap=L.map('driverMap').setView([stops[0].lat,stops[0].lng],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(driverMap)}driverMarkers.forEach(m=>driverMap.removeLayer(m));driverMarkers=[];if(driverLine){driverMap.removeLayer(driverLine);driverLine=null}const bounds=[];stops.forEach(s=>{driverMarkers.push(L.marker([s.lat,s.lng]).addTo(driverMap).bindPopup(`<strong>${escapeHTML(s.name)}</strong><br>${escapeHTML(s.time)}`));bounds.push([s.lat,s.lng])});driverLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(driverMap);driverMap.fitBounds(bounds,{padding:[30,30]});setTimeout(()=>driverMap.invalidateSize(),80)}document.getElementById('driverSchedule').innerHTML=`<h3 style="color:var(--blue)">🕒 Horários e paradas</h3><div style="overflow:auto;margin-top:14px"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário previsto</th></tr></thead><tbody>${stops.map((s,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(s.name)}</td><td><strong>${escapeHTML(s.time)}</strong></td></tr>`).join('')}</tbody></table></div>`;renderDriverNoticeHistory()}
+let driverMap=null,driverMarkers=[],driverLine=null,googleDriverMap=null,googleDriverDirectionsRenderer=null,googleDriverDirectionsService=null;
+function clearLeafletDriverMap(){if(driverMap){try{driverMap.remove()}catch(_){}driverMap=null}driverMarkers=[];driverLine=null}
+function renderLeafletDriverRoute(stops){
+ const points=validGeoStops(stops),el=document.getElementById('driverMap');if(!el||!points.length)return;if(!driverMap){el.innerHTML='';driverMap=L.map('driverMap').setView([points[0].lat,points[0].lng],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(driverMap)}
+ driverMarkers.forEach(m=>driverMap.removeLayer(m));driverMarkers=[];if(driverLine){driverMap.removeLayer(driverLine);driverLine=null}const bounds=[];points.forEach((s,i)=>{driverMarkers.push(L.marker([s.lat,s.lng]).addTo(driverMap).bindPopup(`<strong>${escapeHTML(s.name||'Parada')}</strong><br>Chegada prevista: ${escapeHTML(s.time||'Não informado')}<br>Ordem: ${i+1}`));bounds.push([s.lat,s.lng])});if(bounds.length){driverLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(driverMap);driverMap.fitBounds(bounds,{padding:[30,30]});setTimeout(()=>driverMap?.invalidateSize(),80)}
+ const note=document.getElementById('driverMapProviderNote');if(note)note.textContent='Mapa de contingência: configure o Google Maps para calcular o percurso real pelas vias.';
+}
+async function renderDriverRouteMap(stops){
+ const points=validGeoStops(stops),el=document.getElementById('driverMap');if(!el||points.length<2){renderLeafletDriverRoute(stops);return}
+ if(googleMapsConfigured()&&await loadGoogleMaps()){
+  clearLeafletDriverMap();el.innerHTML='';
+  googleDriverMap=new google.maps.Map(el,{center:{lat:points[0].lat,lng:points[0].lng},zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:true});
+  googleDriverDirectionsService=new google.maps.DirectionsService();
+  googleDriverDirectionsRenderer=new google.maps.DirectionsRenderer({map:googleDriverMap,draggable:true,suppressMarkers:false,preserveViewport:false});
+  try{
+   const result=await googleDriverDirectionsService.route({origin:{lat:points[0].lat,lng:points[0].lng},destination:{lat:points[points.length-1].lat,lng:points[points.length-1].lng},waypoints:points.slice(1,-1).map(st=>({location:{lat:st.lat,lng:st.lng},stopover:true})),travelMode:google.maps.TravelMode.DRIVING,optimizeWaypoints:false,provideRouteAlternatives:false});
+   googleDriverDirectionsRenderer.setDirections(result);const note=document.getElementById('driverMapProviderNote');if(note)note.textContent='Percurso calculado pelo Google Maps. A linha pode ser arrastada para exploração visual; isso não altera a rota cadastrada.';return
+  }catch(err){console.warn('SIRE Google Maps Directions (motorista):',err)}
+ }
+ renderLeafletDriverRoute(stops)
+}
+async function renderDriverPanel(){
+ if(currentUser.role!=='driver')return;const r=routeById(currentUser.routeId),d=driverByRoute(currentUser.routeId);if(!r)return;const stops=r.stops||[];
+ document.getElementById('driverRouteSummary').innerHTML=`<div><strong>Rota</strong><br>${escapeHTML(r.number)} — ${escapeHTML(r.name)}</div><div><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div><div><strong>Paradas</strong><br>${stops.length}</div><div><strong>Chegada prevista</strong><br>${escapeHTML(stops[stops.length-1]?.time||'-')}</div>`;
+ if(stops.length)await renderDriverRouteMap(stops);
+ document.getElementById('driverSchedule').innerHTML=`<h3 style="color:var(--blue)">🕒 Horários e paradas</h3><div style="overflow:auto;margin-top:14px"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Chegada prevista</th></tr></thead><tbody>${stops.map((s,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(s.name)}</td><td><strong>${escapeHTML(s.time||'Não informado')}</strong></td></tr>`).join('')}</tbody></table></div>`;renderDriverNoticeHistory()
+}
+
 async function publishDriverNotice(){if(currentUser.role!=='driver')return;const title=document.getElementById('driverNoticeTitle').value.trim(),type=document.getElementById('driverNoticeType').value,text=document.getElementById('driverNoticeText').value.trim();if(!title||!text)return alert('Preencha título e mensagem.');const id=uid(),n={id,title,type,text,date:new Date().toISOString(),active:true,routeId:Number(currentUser.routeId),author:currentUser.displayName,authorUid:currentUser.uid};try{await fb.setDoc(fb.doc(firestore,'notifications',String(id)),n);markCurrentNoticeRead(id);document.getElementById('driverNoticeTitle').value='';document.getElementById('driverNoticeText').value='';await loadData();renderDriverNoticeHistory();updateNoticeBadge();renderHome();alert('Aviso publicado para os usuários da sua rota.')}catch(err){alert(humanFirebaseError(err))}}
 function renderDriverNoticeHistory(){const box=document.getElementById('driverNoticeHistory');if(!box)return;const items=db.notifications.filter(n=>n.active&&String(n.routeId)===String(currentUser.routeId)).sort((a,b)=>new Date(b.date)-new Date(a.date));box.innerHTML=items.length?items.map(n=>`<div class="notification"><strong>${escapeHTML(n.title)}</strong><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${new Date(n.date).toLocaleString('pt-BR')} • ${escapeHTML(n.author||'SIRE')}</span></div>`).join(''):'<p class="muted">Nenhum aviso publicado para esta rota.</p>'}
 
