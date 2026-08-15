@@ -211,7 +211,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
     </div>
     <button class="btn" onclick="publishDriverNotice()">Publicar para minha rota</button>
   </div>
-  <div class="panel driver-history"><h3 style="color:var(--blue)">Histórico de avisos da rota</h3><div id="driverNoticeHistory" style="margin-top:14px"></div></div>
+  <div id="driverNoticeHistoryBox" class="panel driver-history"><h3 style="color:var(--blue)">Histórico de avisos da rota</h3><div id="driverNoticeHistory" style="margin-top:14px"></div></div>
 </div>
 
 <!-- PAINEL ADMINISTRATIVO — acessível somente ao perfil Admin -->
@@ -268,7 +268,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
 </div>
 </main>
 
-<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.8 Spark: segurança revisada, gestão de rotas/paradas, relatórios e avisos avançados, acessibilidade aprimorada.</p></footer>
+<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.8.1 Spark: segurança revisada, gestão de rotas/paradas, relatórios e avisos avançados, acessibilidade aprimorada.</p></footer>
 </div>
 
 <!-- POP-UP RESUMIDO DE AVISOS -->
@@ -327,7 +327,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
    - V5.4: esquema de campos restrito, histórico protegido e status Ativo/Inativo
    - V5.6: horários visíveis em Rotas + filtro administrativo de alunos por rota
    - V5.6.1: botão Início/Voltar dinâmico + centralização do formulário de aviso do motorista
-   - V5.8: inicialização resiliente, editor de rotas/paradas, relatórios e avisos avançados, acessibilidade
+   - V5.8.1: V5.8 + centralização dos atalhos Horários/Publicar aviso/Histórico do motorista
    - Login: botão Mostrar/Ocultar senha (somente visual, sem armazenar a senha)
 ========================================================== */
 const FIREBASE_SDK_VERSION='12.17.1';
@@ -533,7 +533,7 @@ function renderHome(){
  }else if(currentUser.role==='driver'){
   desc.innerHTML='Você está conectado como <strong>Motorista</strong>. O acesso é limitado à sua rota e às funções operacionais permitidas.';
   highlights.innerHTML=`<div class="info-box"><h3>${r?escapeHTML(r.number):'-'}</h3><span>Rota designada</span></div><div class="info-box"><h3>${r?.stops?.length||0}</h3><span>Paradas do percurso</span></div><div class="info-box"><h3>${unread}</h3><span>Avisos não lidos</span></div>`;
-  cards.innerHTML=homeCard('🚌','Rotas','Consulte sua rota designada e todas as paradas.',`openRoutePage(false)`)+homeCard('🕒','Horários','Acesse a sequência de paradas e horários previstos.',`openDriverSection('driverSchedule')`)+homeCard('🔔','Publicar aviso','Informe atrasos, mudanças e imprevistos aos usuários da rota.',`openDriverSection('driverNoticeForm')`)+homeCard('📚','Histórico de avisos','Veja os comunicados da sua rota.',`openDriverSection('driverNoticeHistory')`)+homeCard('💬','Ajuda','Acesse a central de atendimento do SIRE.',`showPage('ajuda')`);
+  cards.innerHTML=homeCard('🚌','Rotas','Consulte sua rota designada e todas as paradas.',`openRoutePage(false)`)+homeCard('🕒','Horários','Acesse a sequência de paradas e horários previstos.',`openDriverSection('driverSchedule')`)+homeCard('🔔','Publicar aviso','Informe atrasos, mudanças e imprevistos aos usuários da rota.',`openDriverSection('driverNoticeForm')`)+homeCard('📚','Histórico de avisos','Veja os comunicados da sua rota.',`openDriverSection('driverNoticeHistoryBox')`)+homeCard('💬','Ajuda','Acesse a central de atendimento do SIRE.',`showPage('ajuda')`);
   context.innerHTML=`<h3 style="color:var(--blue)">Resumo operacional</h3><div class="context-grid"><div class="context-item"><strong>Rota</strong><br>${r?escapeHTML(r.number+' — '+r.name):'-'}</div><div class="context-item"><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div><div class="context-item"><strong>Primeira parada</strong><br>${r?.stops?.[0]?escapeHTML(r.stops[0].time):'-'}</div><div class="context-item"><strong>Chegada prevista</strong><br>${r?.stops?.length?escapeHTML(r.stops[r.stops.length-1].time):'-'}</div></div>`;
  }else{
   const open=db.feedbacks.filter(f=>f.status!=='Resolvido').length;
@@ -547,9 +547,11 @@ function homeCard(icon,title,text,action){return `<div class="card action-card" 
 function openRoutePage(focusMap){showPage('rotas');if(focusMap)setTimeout(()=>document.getElementById('map').scrollIntoView({behavior:motionBehavior(),block:'center'}),180)}
 function openDriverSection(id){
  showPage('motorista');
+ // Horários, publicação e histórico são posicionados pelo contêiner completo.
+ // block:'center' evita que o cabeçalho sticky cubra o título da caixa.
  setTimeout(()=>{
   const target=document.getElementById(id);if(!target)return;
-  target.scrollIntoView({behavior:motionBehavior(),block:id==='driverNoticeForm'?'center':'start'});
+  target.scrollIntoView({behavior:motionBehavior(),block:'center',inline:'nearest'});
  },260)
 }
 
