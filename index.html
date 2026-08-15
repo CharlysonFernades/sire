@@ -64,7 +64,19 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
 .driver-history{margin-top:20px}
 .request-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.request-detail-item{background:#f3f6fb;padding:14px;border-radius:14px;word-break:break-word}.request-detail-item strong{color:var(--blue)}.request-detail-item.full{grid-column:1/-1}.request-description{white-space:pre-wrap;line-height:1.7;background:#f7f9fd;padding:18px;border-radius:15px;margin:14px 0;border-left:5px solid var(--blue)}.request-answer-box{margin-top:16px}.request-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.request-actions .btn{width:auto}.request-table-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
 
-@media(max-width:800px){header{align-items:flex-start}.page{padding:35px 5%}.route-toolbar,.form-grid,.admin-layout,.request-detail-grid{grid-template-columns:1fr}.full,.request-detail-item.full{grid-column:auto}.sidebar{display:flex;overflow:auto;gap:5px}.sidebar button{min-width:max-content}.hero img{max-width:100%}.profile-picker{grid-template-columns:1fr}.top-right{gap:6px}.user-chip{display:none}nav{order:2;width:100%;justify-content:flex-start}.login-card{padding:25px}}
+.skip-link{position:fixed;left:12px;top:12px;z-index:5000;background:#fff;color:var(--blue);padding:10px 14px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.2);transform:translateY(-160%);transition:.2s}.skip-link:focus{transform:none}
+button:disabled,.btn:disabled{opacity:.58;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+button,input,select,textarea,.action-card{touch-action:manipulation}
+button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.action-card:focus-visible,.notice-summary:focus-visible,.close-btn:focus-visible{outline:3px solid rgba(20,86,192,.35);outline-offset:3px}
+.table-wrap{overflow:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.form-note{font-size:.82rem;color:var(--muted);margin-top:6px}
+.status.expired{background:#f2e9ff;color:#6e3ea8}
+.status.inactive{background:#f0f1f4;color:#59616d}
+.inline-actions{display:flex;gap:7px;flex-wrap:wrap}
+.admin-subpanel{margin-top:18px;padding:18px;background:#f8faff;border:1px solid #e5ebf5;border-radius:16px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media(max-width:800px){header{align-items:flex-start;flex-wrap:wrap}.page{padding:30px 4.5%}.route-toolbar,.form-grid,.admin-layout,.request-detail-grid{grid-template-columns:1fr}.full,.request-detail-item.full{grid-column:auto}.sidebar{display:flex;overflow:auto;gap:5px;position:sticky;top:76px;z-index:20}.sidebar button{min-width:max-content}.hero img{max-width:100%}.profile-picker{grid-template-columns:1fr}.top-right{gap:6px;width:100%;justify-content:flex-start}.user-chip{display:none}nav{order:2;width:100%;justify-content:flex-start}nav button,.btn{min-height:44px}.login-card{padding:25px}.login-fields input,.login-fields button,input,select,textarea{font-size:16px}#map,#driverMap{height:330px}.section-title{margin-bottom:20px}.card,.panel,.form-box{padding:19px}.admin-layout main{min-width:0}.notification{overflow-wrap:anywhere}}
 </style>
 </head>
 <body>
@@ -80,33 +92,34 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
 
     <form id="loginForm" onsubmit="performLogin(event)">
       <div class="login-fields">
-        <div><label>E-mail</label><input id="loginUser" type="email" autocomplete="username" required placeholder="seuemail@exemplo.com"></div>
-        <div><label>Senha</label><div class="password-wrap"><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Digite sua senha"><button id="loginPassToggle" class="password-toggle" type="button" onclick="toggleLoginPassword()" aria-label="Mostrar senha" aria-pressed="false">👁 Mostrar</button></div></div>
-        <button class="btn" type="submit">Entrar no SIRE</button>
-        <button class="btn secondary" type="button" onclick="resetPassword()">Esqueci minha senha</button>
+        <div><label for="loginUser">E-mail</label><input id="loginUser" type="email" autocomplete="username" required placeholder="seuemail@exemplo.com"></div>
+        <div><label for="loginPass">Senha</label><div class="password-wrap"><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Digite sua senha"><button id="loginPassToggle" class="password-toggle" type="button" onclick="toggleLoginPassword()" aria-label="Mostrar senha" aria-pressed="false">👁 Mostrar</button></div></div>
+        <button id="loginSubmitButton" class="btn" type="submit" disabled aria-disabled="true">Inicializando SIRE...</button>
+        <button id="resetPasswordButton" class="btn secondary" type="button" onclick="resetPassword()" disabled aria-disabled="true">Esqueci minha senha</button>
       </div>
     </form>
-    <div id="loginError" class="login-error"></div>
+    <div id="loginError" class="login-error" role="status" aria-live="polite"></div>
     <div class="login-help"><strong>Segurança:</strong> o perfil não é escolhido aqui. Após o login, o Firebase informa ao SIRE se a conta é Aluno, Motorista ou Administrador.</div>
   </div>
 </section>
 
 <!-- Aplicação fica totalmente oculta antes do login -->
 <div id="appShell" class="hidden">
+<a class="skip-link" href="#mainContent">Pular para o conteúdo principal</a>
 <header>
   <div class="logo">SIRE</div>
-  <nav>
-    <button onclick="showPage('inicio')">Início</button>
+  <nav aria-label="Navegação principal">
+    <button id="primaryNavButton" onclick="showPage('inicio')" title="Ir para o início" aria-label="Ir para o início">Início</button>
     <button onclick="showPage('ajuda')">Ajuda</button>
   </nav>
   <div class="top-right">
-    <button class="notice-bell" onclick="openNotifications()" title="Avisos">🔔<span id="noticeBadge" class="notice-badge hidden">0</span></button>
+    <button class="notice-bell" onclick="openNotifications()" title="Avisos" aria-label="Abrir avisos">🔔<span id="noticeBadge" class="notice-badge hidden">0</span></button>
     <div id="userChip" class="user-chip"></div>
     <button class="btn ghost" onclick="logout()">Sair</button>
   </div>
 </header>
 
-<main>
+<main id="mainContent" tabindex="-1">
 <!-- INÍCIO: dashboard personalizado por perfil -->
 <div class="page active" id="inicio">
   <!-- Prioridade de navegação: atalhos e informações da rota aparecem primeiro -->
@@ -130,14 +143,14 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
   <div class="section-title"><h2 id="routesPageTitle">Rotas escolares</h2><p id="routesPageSubtitle">Consulte mapa, paradas e horários.</p></div>
   <div class="panel">
     <div id="routeToolbar" class="route-toolbar">
-      <input id="routeSearch" placeholder="🔎 Pesquisar bairro, escola, localidade ou número..." oninput="searchRoutes()">
-      <select id="routeSelect" onchange="selectRoute(this.value)"></select>
-      <select id="daySelect" onchange="renderRoute()"><option>Dia útil</option><option>Sábado</option></select>
+      <input id="routeSearch" aria-label="Pesquisar rotas" placeholder="🔎 Pesquisar bairro, escola, localidade ou número..." oninput="searchRoutes()">
+      <select id="routeSelect" aria-label="Selecionar rota" onchange="selectRoute(this.value)"></select>
+      <select id="daySelect" aria-label="Selecionar tipo de dia" onchange="renderRoute()"><option>Dia útil</option><option>Sábado</option></select>
     </div>
     <div id="searchResults" class="search-results"></div>
     <div id="routeSummary" class="route-info"></div>
     <div id="routeSchedule" class="panel" style="margin-top:18px"></div>
-    <div id="map"></div>
+    <div id="map" role="region" aria-label="Mapa da rota escolar"></div>
     <div class="actions"><button class="btn" onclick="locateUser()">📍 Minha localização</button><button class="btn secondary" onclick="showPage('ajuda');openFeedback()">💬 Informar ocorrência</button></div>
   </div>
 </div>
@@ -185,12 +198,12 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
   <div id="driverRouteSummary" class="route-info"></div>
   <div class="panel" style="margin-top:18px">
     <h3 style="color:var(--blue)">🗺️ Mapa da minha rota</h3>
-    <div id="driverMap"></div>
+    <div id="driverMap" role="region" aria-label="Mapa da rota do motorista"></div>
   </div>
   <div id="driverSchedule" class="panel" style="margin-top:18px"></div>
   <div id="driverNoticeForm" class="form-box" style="margin-top:18px">
     <h3 style="color:var(--blue)">🔔 Publicar aviso</h3>
-    <p class="muted">O aviso será direcionado aos usuários da sua rota.</p>
+    <p class="muted">O aviso será direcionado aos usuários da sua rota. <strong>Segurança:</strong> use esta função somente com o veículo parado em local seguro.</p>
     <div class="form-grid" style="margin-top:15px">
       <input id="driverNoticeTitle" placeholder="Título do aviso">
       <select id="driverNoticeType"><option>Atraso</option><option>Mudança de parada</option><option>Condições da via</option><option>Veículo em manutenção</option><option>Aviso importante</option><option>Atualização operacional</option></select>
@@ -245,31 +258,31 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
         </div>
       </section>
       <section class="admin-section" id="admin-solicitacoes"><div class="panel"><h3 style="color:var(--blue);margin-bottom:15px">Gerenciar solicitações</h3><div id="requestsTable"></div></div></section>
-      <section class="admin-section" id="admin-rotas"><div class="panel"><h3 style="color:var(--blue)">Rotas cadastradas</h3><div class="form-grid" style="margin:15px 0"><input id="newRouteNumber" placeholder="Número"><input id="newRouteName" placeholder="Nome da rota"><input id="newRouteSchool" class="full" placeholder="Escola"></div><button class="btn" onclick="addRoute()">Cadastrar rota</button><div id="routesTable" style="margin-top:18px"></div></div></section>
-      <section class="admin-section" id="admin-paradas"><div class="panel"><h3 style="color:var(--blue)">Paradas</h3><p class="muted">As paradas da demonstração são pré-cadastradas por rota.</p><div id="stopsTable" style="margin-top:18px"></div></div></section>
+      <section class="admin-section" id="admin-rotas"><div class="panel"><h3 style="color:var(--blue)">🚌 Gestão de rotas</h3><p class="muted">Cadastre novas rotas ou edite número, nome e escola sem alterar o identificador interno.</p><div class="form-grid" style="margin:15px 0"><div><label for="newRouteNumber">Número da rota</label><input id="newRouteNumber" maxlength="30" placeholder="Ex.: 101"></div><div><label for="newRouteName">Nome da rota</label><input id="newRouteName" maxlength="120" placeholder="Ex.: Icaraí"></div><div class="full"><label for="newRouteSchool">Escola</label><input id="newRouteSchool" maxlength="180" placeholder="Nome da escola"></div></div><div class="actions"><button id="routeSaveButton" class="btn" onclick="saveRoute()">Cadastrar rota</button><button id="routeCancelEditButton" class="btn secondary hidden" onclick="cancelRouteEdit()">Cancelar edição</button></div><div id="routeFormResult" role="status" aria-live="polite"></div><div id="routesTable" style="margin-top:18px"></div></div></section>
+      <section class="admin-section" id="admin-paradas"><div class="panel"><h3 style="color:var(--blue)">📍 Gestão de paradas e horários</h3><p class="muted">Selecione a rota para adicionar, editar, remover ou reorganizar as paradas. As alterações são gravadas somente por Administradores.</p><div class="filter-grid"><div><label for="stopRouteSelect">Rota</label><select id="stopRouteSelect" onchange="cancelStopEdit();renderStops()"></select></div></div><div id="stopEditor" class="admin-subpanel"><div class="form-grid"><div class="full"><label for="stopName">Nome da parada</label><input id="stopName" maxlength="120" placeholder="Ex.: Icaraí — Parada 03"></div><div><label for="stopTime">Horário previsto</label><input id="stopTime" type="time"></div><div><label for="stopLat">Latitude</label><input id="stopLat" type="number" step="any" min="-90" max="90" placeholder="-3.6730"></div><div><label for="stopLng">Longitude</label><input id="stopLng" type="number" step="any" min="-180" max="180" placeholder="-38.6650"></div></div><p class="form-note">Latitude e longitude são opcionais, mas devem ser preenchidas juntas para a parada aparecer no mapa.</p><div class="actions"><button id="stopSaveButton" class="btn" onclick="saveStop()">Adicionar parada</button><button id="stopCancelButton" class="btn secondary hidden" onclick="cancelStopEdit()">Cancelar edição</button></div><div id="stopFormResult" role="status" aria-live="polite"></div></div><div id="stopsTable" style="margin-top:18px"></div></div></section>
       <section class="admin-section" id="admin-motoristas"><div class="panel"><h3 style="color:var(--blue)">Motoristas</h3><div class="alert info"><strong>Privacidade:</strong> telefone e CNH ficam na coleção administrativa <code>drivers</code>. Alunos e motoristas recebem somente nome, veículo e rota pela coleção <code>driverPublic</code>.</div><div class="form-grid" style="margin:15px 0"><input id="driverName" placeholder="Nome"><input id="driverPhone" placeholder="Telefone"><input id="driverCnh" placeholder="CNH"><select id="driverRouteId" class="full"></select></div><div class="actions"><button class="btn" onclick="addDriver()">Cadastrar motorista</button><button class="btn secondary" onclick="migrateDriverPublicData()">Sincronizar dados públicos dos motoristas</button></div><div id="driverMigrationResult"></div><div id="driversTable" style="margin-top:18px"></div></div></section>
-      <section class="admin-section" id="admin-notificacoes"><div class="panel"><h3 style="color:var(--blue)">Publicar aviso</h3><div class="form-grid" style="margin:15px 0"><input id="noticeTitle" placeholder="Título"><select id="noticeType"><option>Atraso</option><option>Mudança de rota</option><option>Aviso importante</option><option>Atualização operacional</option></select><select id="noticeRoute" class="full"></select><textarea id="noticeText" class="full" placeholder="Mensagem"></textarea></div><button class="btn" onclick="addNotification()">Publicar</button><div id="adminNoticeHistory" style="margin-top:20px"></div></div></section>
+      <section class="admin-section" id="admin-notificacoes"><div class="panel"><h3 style="color:var(--blue)">🔔 Central administrativa de avisos</h3><div class="form-grid" style="margin:15px 0"><div><label for="noticeTitle">Título</label><input id="noticeTitle" maxlength="120" placeholder="Título do aviso"></div><div><label for="noticeType">Tipo</label><select id="noticeType"><option>Atraso</option><option>Mudança de rota</option><option>Mudança de parada</option><option>Condições da via</option><option>Veículo em manutenção</option><option>Aviso importante</option><option>Atualização operacional</option></select></div><div><label for="noticeRoute">Destino</label><select id="noticeRoute"></select></div><div><label for="noticeExpiresAt">Validade até (opcional)</label><input id="noticeExpiresAt" type="datetime-local"></div><div class="full"><label for="noticeText">Mensagem</label><textarea id="noticeText" maxlength="1000" placeholder="Mensagem"></textarea></div></div><button class="btn" onclick="addNotification()">Publicar aviso</button><div id="noticePublishResult" role="status" aria-live="polite"></div><div class="admin-subpanel"><h3 style="color:var(--blue)">Filtros do histórico</h3><div class="filter-grid"><div><label for="noticeHistoryRoute">Rota</label><select id="noticeHistoryRoute" onchange="renderAdminNoticeHistory()"></select></div><div><label for="noticeHistoryType">Tipo</label><select id="noticeHistoryType" onchange="renderAdminNoticeHistory()"><option value="all">Todos</option><option>Atraso</option><option>Mudança de rota</option><option>Mudança de parada</option><option>Condições da via</option><option>Veículo em manutenção</option><option>Aviso importante</option><option>Atualização operacional</option></select></div><div><label for="noticeHistoryStatus">Situação</label><select id="noticeHistoryStatus" onchange="renderAdminNoticeHistory()"><option value="all">Todas</option><option value="current">Ativos</option><option value="expired">Expirados</option><option value="inactive">Inativos</option></select></div><div><label for="noticeHistoryStart">De</label><input id="noticeHistoryStart" type="date" onchange="renderAdminNoticeHistory()"></div><div><label for="noticeHistoryEnd">Até</label><input id="noticeHistoryEnd" type="date" onchange="renderAdminNoticeHistory()"></div></div><button class="btn secondary small" onclick="resetNoticeHistoryFilters()">Limpar filtros</button></div><div id="adminNoticeHistory" style="margin-top:20px"></div></div></section>
       <section class="admin-section" id="admin-relatorios"><div class="panel"><h3 style="color:var(--blue)">Relatórios estatísticos</h3><p class="muted">Indicadores operacionais e quantidade de alunos cadastrados por rota.</p><div id="reportContent" style="margin-top:15px"></div></div></section>
     </main>
   </div>
 </div>
 </main>
 
-<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.6 Spark: segurança V5.4 preservada, horários em Rotas e indicadores de alunos por rota.</p></footer>
+<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.8 Spark: segurança revisada, gestão de rotas/paradas, relatórios e avisos avançados, acessibilidade aprimorada.</p></footer>
 </div>
 
 <!-- POP-UP RESUMIDO DE AVISOS -->
 <div id="notificationsModal" class="modal-backdrop hidden" onclick="backdropClose(event,'notificationsModal')">
-  <div class="modal">
-    <div class="modal-head"><div><h2 id="notificationsModalTitle">🔔 Avisos</h2><p id="notificationsModalSubtitle" class="muted">Clique em um título para ler o comunicado completo.</p></div><button class="close-btn" onclick="closeModal('notificationsModal')">✕</button></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="notificationsModalTitle">
+    <div class="modal-head"><div><h2 id="notificationsModalTitle">🔔 Avisos</h2><p id="notificationsModalSubtitle" class="muted">Clique em um título para ler o comunicado completo.</p></div><button class="close-btn" onclick="closeModal('notificationsModal')" aria-label="Fechar avisos">✕</button></div>
     <div id="notificationsSummary"></div>
   </div>
 </div>
 
 <!-- AVISO COMPLETO -->
 <div id="noticeDetailModal" class="modal-backdrop hidden" onclick="backdropClose(event,'noticeDetailModal')">
-  <div class="modal large">
-    <div class="modal-head"><div><h2 id="noticeDetailTitle">Aviso</h2><div id="noticeDetailMeta" class="notice-meta"></div></div><button class="close-btn" onclick="closeModal('noticeDetailModal')">✕</button></div>
+  <div class="modal large" role="dialog" aria-modal="true" aria-labelledby="noticeDetailTitle">
+    <div class="modal-head"><div><h2 id="noticeDetailTitle">Aviso</h2><div id="noticeDetailMeta" class="notice-meta"></div></div><button class="close-btn" onclick="closeModal('noticeDetailModal')" aria-label="Fechar aviso">✕</button></div>
     <div id="noticeDetailTags"></div>
     <div id="noticeDetailText" class="notice-detail-text"></div>
     <div class="actions"><button class="btn" onclick="closeModal('noticeDetailModal')">Concluir leitura</button></div>
@@ -278,13 +291,13 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
 
 <!-- DETALHES DA SOLICITAÇÃO — uso administrativo -->
 <div id="requestDetailModal" class="modal-backdrop hidden" onclick="backdropClose(event,'requestDetailModal')">
-  <div class="modal large">
+  <div class="modal large" role="dialog" aria-modal="true" aria-labelledby="requestDetailTitle">
     <div class="modal-head">
       <div>
-        <h2>📨 Detalhes da solicitação</h2>
+        <h2 id="requestDetailTitle">📨 Detalhes da solicitação</h2>
         <div id="requestDetailProtocol" class="notice-meta"></div>
       </div>
-      <button class="close-btn" onclick="closeModal('requestDetailModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('requestDetailModal')" aria-label="Fechar detalhes da solicitação">✕</button>
     </div>
     <div id="requestDetailContent"></div>
     <div class="request-answer-box">
@@ -306,13 +319,15 @@ footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;tex
 <script src="./appcheck-config.js"></script>
 <script>
 /* ==========================================================
-   SIRE V5.6 — Firebase Spark / GitHub Pages
+   SIRE V5.8 — Firebase Spark / GitHub Pages
    - Firebase Authentication (e-mail e senha)
    - Cloud Firestore (dados compartilhados)
    - Sem Cloud Functions: compatível com a arquitetura Spark proposta
    - Perfis lidos do Firestore; nunca escolhidos pelo usuário no navegador
    - V5.4: esquema de campos restrito, histórico protegido e status Ativo/Inativo
    - V5.6: horários visíveis em Rotas + filtro administrativo de alunos por rota
+   - V5.6.1: botão Início/Voltar dinâmico + centralização do formulário de aviso do motorista
+   - V5.8: inicialização resiliente, editor de rotas/paradas, relatórios e avisos avançados, acessibilidade
    - Login: botão Mostrar/Ocultar senha (somente visual, sem armazenar a senha)
 ========================================================== */
 const FIREBASE_SDK_VERSION='12.17.1';
@@ -320,6 +335,8 @@ let fb={},auth=null,firestore=null,appCheck=null;
 let currentUser=null;
 let firebaseReady=false;
 let db={routes:[],feedbacks:[],drivers:[],notifications:[],users:[]};
+let editingRouteDocId=null,editingStopIndex=null;
+let modalFocusStack=[];
 
 function escapeHTML(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function roleLabel(role){return role==='student'?'Aluno':role==='driver'?'Motorista':'Administrador'}
@@ -329,23 +346,38 @@ function uid(){return Date.now()+Math.floor(Math.random()*1000)}
 function showLoginMessage(message,type='error'){document.getElementById('loginError').innerHTML=`<div class="alert ${type}">${escapeHTML(message)}</div>`}
 function firebaseConfigured(){const c=window.SIRE_FIREBASE_CONFIG||{};return c.apiKey&&c.projectId&&c.apiKey!=='COLE_AQUI'}
 
+function motionBehavior(){return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}
+function toJSDate(value){if(!value)return null;if(typeof value?.toDate==='function')return value.toDate();const d=value instanceof Date?value:new Date(value);return Number.isNaN(d.getTime())?null:d}
+function formatDateTime(value){const d=toJSDate(value);return d?d.toLocaleString('pt-BR'):'-'}
+function setLoginReadyState(ready,label){
+ const submit=document.getElementById('loginSubmitButton'),reset=document.getElementById('resetPasswordButton');
+ if(submit){submit.disabled=!ready;submit.setAttribute('aria-disabled',String(!ready));submit.textContent=label||(ready?'Entrar no SIRE':'Inicializando SIRE...')}
+ if(reset){reset.disabled=!ready;reset.setAttribute('aria-disabled',String(!ready))}
+}
+function activateModal(id){
+ const backdrop=document.getElementById(id);if(!backdrop)return;
+ modalFocusStack.push({id,element:document.activeElement});backdrop.classList.remove('hidden');
+ setTimeout(()=>backdrop.querySelector('.close-btn,button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')?.focus(),0);
+}
+
 async function initFirebase(){
+ setLoginReadyState(false,'Inicializando SIRE...');
  if(!firebaseConfigured()){
+  setLoginReadyState(false,'Firebase não configurado');
   showLoginMessage('Firebase ainda não configurado. Preencha o arquivo firebase-config.js antes de publicar.','info');
   return;
  }
  try{
   const base=`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
-  const appMod=await import(`${base}/firebase-app.js`);
-  const authMod=await import(`${base}/firebase-auth.js`);
-  const fsMod=await import(`${base}/firebase-firestore.js`);
-  const appCheckMod=await import(`${base}/firebase-app-check.js`);
+  const [appMod,authMod,fsMod,appCheckMod]=await Promise.all([
+   import(`${base}/firebase-app.js`),import(`${base}/firebase-auth.js`),import(`${base}/firebase-firestore.js`),import(`${base}/firebase-app-check.js`)
+  ]);
   fb={...appMod,...authMod,...fsMod,...appCheckMod};
   const app=fb.initializeApp(window.SIRE_FIREBASE_CONFIG);
 
-  // App Check vem antes de Authentication e Firestore.
-  // Enquanto o enforcement estiver desligado, uma eventual falha de atestação
-  // é registrada no Console sem derrubar o login do protótipo.
+  // App Check é inicializado antes do uso efetivo de Authentication/Firestore.
+  // Se a atestação falhar, o Console registra a causa; as regras e o enforcement
+  // continuam sendo a barreira de autorização do banco.
   const appCheckCfg=window.SIRE_APPCHECK_CONFIG||{};
   const appCheckSiteKey=String(appCheckCfg.siteKey||'').trim();
   const appCheckConfigured=appCheckCfg.enabled!==false
@@ -355,26 +387,22 @@ async function initFirebase(){
 
   if(appCheckConfigured){
    try{
-    appCheck=fb.initializeAppCheck(app,{
-     provider:new fb.ReCaptchaEnterpriseProvider(appCheckSiteKey),
-     isTokenAutoRefreshEnabled:true
-    });
+    appCheck=fb.initializeAppCheck(app,{provider:new fb.ReCaptchaEnterpriseProvider(appCheckSiteKey),isTokenAutoRefreshEnabled:true});
     console.info('SIRE App Check: inicializado com reCAPTCHA Enterprise.');
-   }catch(appCheckErr){
-    console.error('SIRE App Check: falha ao inicializar.',appCheckErr);
-   }
-  }else{
-   console.warn('SIRE App Check: configuração ausente. NÃO habilite enforcement ainda.');
-  }
+   }catch(appCheckErr){console.error('SIRE App Check: falha ao inicializar.',appCheckErr)}
+  }else{console.warn('SIRE App Check: configuração ausente ou desativada.')}
 
   auth=fb.getAuth(app);firestore=fb.getFirestore(app);
   await fb.setPersistence(auth,fb.browserSessionPersistence);
-  firebaseReady=true;
+  firebaseReady=true;setLoginReadyState(true);
   fb.onAuthStateChanged(auth,async user=>{
    if(!user){showLoggedOut();return}
-   try{await establishSession(user)}catch(err){console.error(err);await fb.signOut(auth);showLoginMessage(humanFirebaseError(err));}
+   try{await establishSession(user)}catch(err){console.error(err);await fb.signOut(auth);showLoginMessage(humanFirebaseError(err))}
   });
- }catch(err){console.error(err);showLoginMessage('Não foi possível iniciar o Firebase. Verifique a configuração e sua conexão.');}
+ }catch(err){
+  firebaseReady=false;setLoginReadyState(false,'Falha ao inicializar');
+  console.error(err);showLoginMessage('Não foi possível iniciar o Firebase. Verifique a configuração e sua conexão.');
+ }
 }
 
 function humanFirebaseError(err){
@@ -400,7 +428,7 @@ function toggleLoginPassword(){
 }
 
 async function performLogin(e){
- e.preventDefault();if(!firebaseReady)return showLoginMessage('Configure o Firebase antes de entrar.','info');
+ e.preventDefault();if(!firebaseReady)return showLoginMessage('O SIRE ainda está inicializando. Aguarde alguns instantes.','info');
  const email=document.getElementById('loginUser').value.trim();
  const password=document.getElementById('loginPass').value;
  document.getElementById('loginError').innerHTML='<div class="alert info">Autenticando...</div>';
@@ -408,7 +436,7 @@ async function performLogin(e){
 }
 
 async function resetPassword(){
- if(!firebaseReady)return showLoginMessage('Configure o Firebase primeiro.','info');
+ if(!firebaseReady)return showLoginMessage('O SIRE ainda está inicializando. Aguarde alguns instantes.','info');
  const email=document.getElementById('loginUser').value.trim();
  if(!email)return showLoginMessage('Digite seu e-mail no campo acima para receber a redefinição.','info');
  try{await fb.sendPasswordResetEmail(auth,email);showLoginMessage('Se a conta estiver cadastrada, o Firebase enviará as instruções de redefinição.','success')}catch(err){showLoginMessage(humanFirebaseError(err));}
@@ -431,6 +459,7 @@ function showLoggedOut(){
  const pass=document.getElementById('loginPass'),toggle=document.getElementById('loginPassToggle');
  if(pass)pass.type='password';
  if(toggle){toggle.textContent='👁 Mostrar';toggle.setAttribute('aria-label','Mostrar senha');toggle.setAttribute('aria-pressed','false')}
+ setLoginReadyState(firebaseReady);
 }
 
 async function logout(){if(firebaseReady&&auth)await fb.signOut(auth);showLoggedOut()}
@@ -464,9 +493,9 @@ async function loadData(){
   db.routes=[];db.drivers=[];db.feedbacks=[];db.notifications=[];db.users=[];
   if(routeId!==null&&routeId!==undefined){
    const routeSnap=await fb.getDoc(fb.doc(firestore,'routes',String(routeId)));if(routeSnap.exists())db.routes=[{docId:routeSnap.id,...routeSnap.data()}];
-   const driverQ=fb.query(fb.collection(firestore,'driverPublic'),fb.where('routeId','==',Number(routeId)));db.drivers=docsToData(await fb.getDocs(driverQ));
-   const ownNotices=fb.query(fb.collection(firestore,'notifications'),fb.where('routeId','==',Number(routeId)));
-   const generalNotices=fb.query(fb.collection(firestore,'notifications'),fb.where('routeId','==',null));
+   const driverQ=fb.query(fb.collection(firestore,'driverPublic'),fb.where('routeId','==',Number(routeId)),fb.where('active','==',true));db.drivers=docsToData(await fb.getDocs(driverQ));
+   const ownNotices=fb.query(fb.collection(firestore,'notifications'),fb.where('routeId','==',Number(routeId)),fb.where('active','==',true));
+   const generalNotices=fb.query(fb.collection(firestore,'notifications'),fb.where('routeId','==',null),fb.where('active','==',true));
    const [n1,n2]=await Promise.all([fb.getDocs(ownNotices),fb.getDocs(generalNotices)]);
    const merged=[...docsToData(n1),...docsToData(n2)];db.notifications=[...new Map(merged.map(n=>[String(n.id??n.docId),n])).values()];
   }
@@ -479,10 +508,18 @@ async function loadData(){
 }
 
 /* NAVEGAÇÃO E DASHBOARD */
+function updatePrimaryNav(pageId){
+ const button=document.getElementById('primaryNavButton');if(!button)return;
+ const isHome=pageId==='inicio';
+ button.textContent=isHome?'Início':'← Voltar';
+ button.title=isHome?'Ir para o início':'Voltar ao início';
+ button.setAttribute('aria-label',isHome?'Ir para o início':'Voltar ao início');
+}
 function showPage(id){
  if(!currentUser)return;if(id==='admin'&&currentUser.role!=='admin')return;if(id==='motorista'&&currentUser.role!=='driver')return;
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const page=document.getElementById(id);if(page)page.classList.add('active');
- if(id==='rotas')setTimeout(()=>{configureRouteControls();initMap();renderRoute()},60);if(id==='ajuda')configureFeedbackForm();if(id==='acompanhar')renderMyRequestsList();if(id==='admin')refreshAdmin();if(id==='motorista')setTimeout(()=>renderDriverPanel(),60);window.scrollTo({top:0,behavior:'smooth'});
+ updatePrimaryNav(id);
+ if(id==='rotas')setTimeout(()=>{configureRouteControls();initMap();renderRoute()},60);if(id==='ajuda')configureFeedbackForm();if(id==='acompanhar')renderMyRequestsList();if(id==='admin')refreshAdmin();if(id==='motorista')setTimeout(()=>renderDriverPanel(),60);window.scrollTo({top:0,behavior:motionBehavior()});
 }
 function renderHome(){
  const r=currentUser.routeId?routeById(currentUser.routeId):null;const d=r?driverByRoute(r.id):null;const unread=getUnreadNotifications().length;
@@ -507,17 +544,25 @@ function renderHome(){
  }
 }
 function homeCard(icon,title,text,action){return `<div class="card action-card" role="button" tabindex="0" onclick="${action}" onkeydown="if(event.key==='Enter'){${action}}"><h3>${icon} ${title}</h3><p>${text}</p></div>`}
-function openRoutePage(focusMap){showPage('rotas');if(focusMap)setTimeout(()=>document.getElementById('map').scrollIntoView({behavior:'smooth',block:'center'}),180)}
-function openDriverSection(id){showPage('motorista');setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}),180)}
+function openRoutePage(focusMap){showPage('rotas');if(focusMap)setTimeout(()=>document.getElementById('map').scrollIntoView({behavior:motionBehavior(),block:'center'}),180)}
+function openDriverSection(id){
+ showPage('motorista');
+ setTimeout(()=>{
+  const target=document.getElementById(id);if(!target)return;
+  target.scrollIntoView({behavior:motionBehavior(),block:id==='driverNoticeForm'?'center':'start'});
+ },260)
+}
 
 /* ROTAS */
 function populateRouteSelects(){
- const allOptions=db.routes.map(r=>`<option value="${r.id}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}${r.active===false?' (Inativa)':''}</option>`).join('');
- const activeOptions=db.routes.filter(r=>r.active!==false).map(r=>`<option value="${r.id}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}</option>`).join('');
- document.getElementById('routeSelect').innerHTML=allOptions;
- document.getElementById('fbRota').innerHTML='<option value="">Selecione</option>'+activeOptions;
- document.getElementById('driverRouteId').innerHTML='<option value="">Selecione uma rota ativa</option>'+activeOptions;
- document.getElementById('noticeRoute').innerHTML='<option value="all">Todas as rotas (aviso geral)</option>'+activeOptions;
+ const allOptions=db.routes.map(r=>`<option value="${escapeHTML(String(r.id))}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}${r.active===false?' (Inativa)':''}</option>`).join('');
+ const activeOptions=db.routes.filter(r=>r.active!==false).map(r=>`<option value="${escapeHTML(String(r.id))}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}</option>`).join('');
+ const setOptions=(id,htmlValue)=>{const el=document.getElementById(id);if(el)el.innerHTML=htmlValue};
+ setOptions('routeSelect',allOptions);setOptions('fbRota','<option value="">Selecione</option>'+activeOptions);
+ setOptions('driverRouteId','<option value="">Selecione uma rota ativa</option>'+activeOptions);
+ setOptions('noticeRoute','<option value="all">Todas as rotas (aviso geral)</option>'+activeOptions);
+ setOptions('noticeHistoryRoute','<option value="all">Todas as rotas</option><option value="general">Avisos gerais</option>'+allOptions);
+ setOptions('stopRouteSelect','<option value="">Selecione uma rota</option>'+allOptions);
  const ar=document.getElementById('accountRoute');if(ar)ar.innerHTML='<option value="">Selecione uma rota ativa</option>'+activeOptions;
 }
 function configureRouteControls(){
@@ -525,13 +570,15 @@ function configureRouteControls(){
  if(currentUser.role==='admin'){toolbar.classList.remove('restricted');search.classList.remove('hidden');select.classList.remove('hidden');document.getElementById('routesPageTitle').textContent='Rotas escolares';document.getElementById('routesPageSubtitle').textContent='Pesquise ou selecione uma rota para visualizar suas informações.';if(!select.value&&db.routes.length)select.value=db.routes[0].id}else{toolbar.classList.add('restricted');search.classList.add('hidden');select.classList.add('hidden');select.value=String(currentUser.routeId);document.getElementById('routesPageTitle').textContent='Minha rota';document.getElementById('routesPageSubtitle').textContent='Mapa, horários, paradas e motorista da rota vinculada à sua conta.'}
 }
 let map,markers=[],routeLine=null;
+function hasGeoStop(s){return s?.lat!==''&&s?.lat!==null&&s?.lat!==undefined&&s?.lng!==''&&s?.lng!==null&&s?.lng!==undefined&&Number.isFinite(Number(s.lat))&&Number.isFinite(Number(s.lng))&&Number(s.lat)>=-90&&Number(s.lat)<=90&&Number(s.lng)>=-180&&Number(s.lng)<=180}
+function validGeoStops(stops){return (stops||[]).filter(hasGeoStop).map(s=>({...s,lat:Number(s.lat),lng:Number(s.lng)}))}
 function initMap(){if(map)return;map=L.map('map').setView([-3.7216,-38.6530],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map)}
 function renderRoute(){
  let id=currentUser.role==='admin'?document.getElementById('routeSelect').value:currentUser.routeId;const r=routeById(id);if(!r)return;const day=document.getElementById('daySelect').value,d=driverByRoute(r.id),stops=Array.isArray(r.stops)?r.stops:[];
  document.getElementById('routeSummary').innerHTML=`<div><strong>Rota</strong><br>${escapeHTML(r.number)} — ${escapeHTML(r.name)}</div><div><strong>Escola</strong><br>${escapeHTML(r.school)}</div><div><strong>Paradas</strong><br>${stops.length}</div><div><strong>Operação</strong><br>${escapeHTML(day)} • ${r.active?'Ativa':'Inativa'}</div><div><strong>Motorista</strong><br>${d?escapeHTML(d.name):'Não informado'}</div><div><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div>`;
  const scheduleBox=document.getElementById('routeSchedule');
- if(scheduleBox){scheduleBox.innerHTML=`<h3 style="color:var(--blue)">⏱️ Horários previstos das paradas</h3><p class="muted" style="margin:6px 0 12px">Horários cadastrados para ${escapeHTML(day)}. Consulte também os avisos da rota para possíveis alterações.</p>${stops.length?`<div style="overflow:auto"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário previsto</th></tr></thead><tbody>${stops.map((st,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(st.name||'-')}</td><td><strong>${escapeHTML(st.time||'Não informado')}</strong></td></tr>`).join('')}</tbody></table></div>`:'<div class="alert info">Nenhuma parada com horário cadastrada para esta rota.</div>'}`;}
- initMap();markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine){map.removeLayer(routeLine);routeLine=null}const bounds=[];stops.forEach((st,i)=>{if(typeof st.lat!=='number'||typeof st.lng!=='number')return;const m=L.marker([st.lat,st.lng]).addTo(map).bindPopup(`<strong>${escapeHTML(st.name)}</strong><br>Horário previsto: ${escapeHTML(st.time)}<br>Ordem: ${i+1}`);markers.push(m);bounds.push([st.lat,st.lng])});if(bounds.length){routeLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(map);map.fitBounds(bounds,{padding:[30,30]})}setTimeout(()=>map.invalidateSize(),60);
+ if(scheduleBox){scheduleBox.innerHTML=`<h3 style="color:var(--blue)">⏱️ Horários previstos das paradas</h3><p class="muted" style="margin:6px 0 12px">Horários cadastrados para ${escapeHTML(day)}. Consulte também os avisos da rota para possíveis alterações.</p>${stops.length?`<div class="table-wrap"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário previsto</th></tr></thead><tbody>${stops.map((st,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(st.name||'-')}</td><td><strong>${escapeHTML(st.time||'Não informado')}</strong></td></tr>`).join('')}</tbody></table></div>`:'<div class="alert info">Nenhuma parada com horário cadastrada para esta rota.</div>'}`;}
+ initMap();markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine){map.removeLayer(routeLine);routeLine=null}const bounds=[];validGeoStops(stops).forEach((st,i)=>{const m=L.marker([st.lat,st.lng]).addTo(map).bindPopup(`<strong>${escapeHTML(st.name||'Parada')}</strong><br>Horário previsto: ${escapeHTML(st.time||'Não informado')}<br>Ordem: ${i+1}`);markers.push(m);bounds.push([st.lat,st.lng])});if(bounds.length){routeLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(map);map.fitBounds(bounds,{padding:[30,30]})}setTimeout(()=>map.invalidateSize(),60);
 }
 function selectRoute(id){document.getElementById('routeSelect').value=id;renderRoute()}
 function searchRoutes(){if(currentUser.role!=='admin')return;const q=document.getElementById('routeSearch').value.trim().toLowerCase(),box=document.getElementById('searchResults');if(!q){box.innerHTML='';return}const matches=db.routes.filter(r=>[r.number,r.name,r.school,...(r.stops||[]).map(s=>s.name)].join(' ').toLowerCase().includes(q));box.innerHTML=matches.length?matches.map(r=>`<div class="result" onclick="selectRoute('${r.id}')"><strong>Rota ${escapeHTML(r.number)} — ${escapeHTML(r.name)}</strong><br><span class="muted">${escapeHTML(r.school)} • ${(r.stops||[]).length} paradas</span></div>`).join(''):'<div class="alert info">Nenhuma rota encontrada.</div>'}
@@ -554,7 +601,7 @@ function configureFeedbackForm(){
   routeField.disabled=false;
  }
 }
-function openFeedback(){showPage('ajuda');setTimeout(()=>document.getElementById('feedbackBox').scrollIntoView({behavior:'smooth'}),80)}
+function openFeedback(){showPage('ajuda');setTimeout(()=>document.getElementById('feedbackBox').scrollIntoView({behavior:motionBehavior()}),80)}
 function clearFeedback(){document.getElementById('feedbackForm').reset();document.getElementById('feedbackResult').innerHTML='';configureFeedbackForm()}
 async function submitFeedback(e){
  e.preventDefault();
@@ -592,36 +639,52 @@ function renderMyRequestsList(){
  if(currentUser.role==='admin'){box.innerHTML='';return}
  const items=db.feedbacks.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
  if(!items.length){box.innerHTML='<div class="panel"><h3 style="color:var(--blue)">Minhas solicitações</h3><p class="muted" style="margin-top:8px">Você ainda não enviou nenhuma solicitação.</p></div>';return}
- box.innerHTML=`<div class="panel"><h3 style="color:var(--blue)">Minhas solicitações</h3><p class="muted" style="margin-top:6px">Os protocolos abaixo pertencem à sua conta. Clique em “Consultar” para abrir o andamento.</p><div style="overflow:auto;margin-top:14px"><table><thead><tr><th>Protocolo</th><th>Tipo</th><th>Status</th><th>Enviada em</th><th>Ação</th></tr></thead><tbody>${items.map(f=>`<tr><td><strong>${escapeHTML(f.protocol||'-')}</strong></td><td>${escapeHTML(f.tipo||'-')}</td><td><span class="status ${statusClass(f.status)}">${escapeHTML(f.status||'-')}</span></td><td>${f.createdAt?new Date(f.createdAt).toLocaleString('pt-BR'):'-'}</td><td><button class="btn secondary small" onclick="openTrackedProtocol('${escapeHTML(f.protocol||'')}')">Consultar</button></td></tr>`).join('')}</tbody></table></div></div>`;
+ box.innerHTML=`<div class="panel"><h3 style="color:var(--blue)">Minhas solicitações</h3><p class="muted" style="margin-top:6px">Os protocolos abaixo pertencem à sua conta. Clique em “Consultar” para abrir o andamento.</p><div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>Protocolo</th><th>Tipo</th><th>Status</th><th>Enviada em</th><th>Ação</th></tr></thead><tbody>${items.map(f=>`<tr><td><strong>${escapeHTML(f.protocol||'-')}</strong></td><td>${escapeHTML(f.tipo||'-')}</td><td><span class="status ${statusClass(f.status)}">${escapeHTML(f.status||'-')}</span></td><td>${f.createdAt?new Date(f.createdAt).toLocaleString('pt-BR'):'-'}</td><td><button class="btn secondary small" onclick="openTrackedProtocol('${escapeHTML(f.protocol||'')}')">Consultar</button></td></tr>`).join('')}</tbody></table></div></div>`;
 }
 function openTrackedProtocol(protocol){
  document.getElementById('protocolInput').value=protocol;
  trackProtocol();
- setTimeout(()=>document.getElementById('trackingResult')?.scrollIntoView({behavior:'smooth',block:'center'}),60);
+ setTimeout(()=>document.getElementById('trackingResult')?.scrollIntoView({behavior:motionBehavior(),block:'center'}),60);
 }
 
 /* AVISOS — leitura local; conteúdo vem do Firestore */
 function getReadKey(){return currentUser?`sire_read_${currentUser.uid}`:'sire_read_guest'}
 function getReadSet(){try{return new Set(JSON.parse(localStorage.getItem(getReadKey()))||[])}catch(e){return new Set()}}
 function saveReadSet(set){localStorage.setItem(getReadKey(),JSON.stringify([...set]))}
-function visibleNotifications(){if(!currentUser)return[];return db.notifications.filter(n=>n.active&&(currentUser.role==='admin'||n.routeId===null||n.routeId===undefined||String(n.routeId)===String(currentUser.routeId))).slice().sort((a,b)=>new Date(b.date)-new Date(a.date))}
+function noticeIsExpired(n){const d=toJSDate(n?.expiresAt);return Boolean(d&&d.getTime()<=Date.now())}
+function noticeSituation(n){return n.active===false?'inactive':noticeIsExpired(n)?'expired':'current'}
+function visibleNotifications(){if(!currentUser)return[];return db.notifications.filter(n=>n.active===true&&!noticeIsExpired(n)&&(currentUser.role==='admin'||n.routeId===null||n.routeId===undefined||String(n.routeId)===String(currentUser.routeId))).slice().sort((a,b)=>(toJSDate(b.date)?.getTime()||0)-(toJSDate(a.date)?.getTime()||0))}
 function getUnreadNotifications(){const read=getReadSet();return visibleNotifications().filter(n=>!read.has(String(n.id??n.docId)))}
 function updateNoticeBadge(){if(!currentUser)return;const count=getUnreadNotifications().length,badge=document.getElementById('noticeBadge');badge.textContent=count;badge.classList.toggle('hidden',count===0)}
 let notificationsOnlyUnread=false;
-function openNotifications(onlyUnread=false){notificationsOnlyUnread=onlyUnread;document.getElementById('notificationsModalTitle').textContent=onlyUnread?'🔔 Novos avisos':'🔔 Avisos';document.getElementById('notificationsModalSubtitle').textContent=onlyUnread?'Estes são os avisos que você ainda não leu. Clique em um título para abrir o comunicado completo.':'Clique em um título para ler o comunicado completo.';renderNotificationSummaries();document.getElementById('notificationsModal').classList.remove('hidden')}
-function renderNotificationSummaries(){const read=getReadSet(),allItems=visibleNotifications(),items=notificationsOnlyUnread?allItems.filter(n=>!read.has(String(n.id??n.docId))):allItems,box=document.getElementById('notificationsSummary');box.innerHTML=items.length?items.map(n=>{const r=n.routeId?routeById(n.routeId):null,excerpt=n.text.length>120?n.text.slice(0,120)+'…':n.text,key=String(n.id??n.docId);return `<button class="notice-summary ${read.has(key)?'':'unread'}" onclick="openNoticeDetail('${escapeHTML(key)}')"><h3>${escapeHTML(n.title)}</h3><div class="notice-excerpt">${escapeHTML(excerpt)}</div><div class="notice-meta">${escapeHTML(n.type)} • ${new Date(n.date).toLocaleString('pt-BR')} • Responsável: ${escapeHTML(n.author||'SIRE')}${r?' • Rota '+escapeHTML(r.number):' • Geral'}</div></button>`}).join(''):notificationsOnlyUnread?'<div class="alert success"><strong>Você está em dia.</strong><br>Não há novos avisos não lidos para o seu perfil.</div>':'<div class="alert info">Nenhum aviso disponível para o seu perfil.</div>'}
-function openNoticeDetail(id){const n=db.notifications.find(x=>String(x.id??x.docId)===String(id));if(!n)return;const visible=visibleNotifications().some(x=>String(x.id??x.docId)===String(id));if(!visible)return;const read=getReadSet();read.add(String(id));saveReadSet(read);updateNoticeBadge();renderNotificationSummaries();renderHome();const r=n.routeId?routeById(n.routeId):null;document.getElementById('noticeDetailTitle').textContent=n.title;document.getElementById('noticeDetailMeta').textContent=`${new Date(n.date).toLocaleString('pt-BR')} • Responsável: ${n.author||'SIRE'}`;document.getElementById('noticeDetailTags').innerHTML=`<span class="notice-tag">${escapeHTML(n.type)}</span><span class="notice-tag">${r?'Rota '+escapeHTML(r.number+' — '+r.name):'Aviso geral'}</span>`;document.getElementById('noticeDetailText').textContent=n.text;document.getElementById('noticeDetailModal').classList.remove('hidden')}
-function closeModal(id){document.getElementById(id).classList.add('hidden')}function backdropClose(e,id){if(e.target.id===id)closeModal(id)}function markCurrentNoticeRead(id){const read=getReadSet();read.add(String(id));saveReadSet(read);updateNoticeBadge()}
+function openNotifications(onlyUnread=false){notificationsOnlyUnread=onlyUnread;document.getElementById('notificationsModalTitle').textContent=onlyUnread?'🔔 Novos avisos':'🔔 Avisos';document.getElementById('notificationsModalSubtitle').textContent=onlyUnread?'Estes são os avisos que você ainda não leu. Clique em um título para abrir o comunicado completo.':'Clique em um título para ler o comunicado completo.';renderNotificationSummaries();activateModal('notificationsModal')}
+function renderNotificationSummaries(){const read=getReadSet(),allItems=visibleNotifications(),items=notificationsOnlyUnread?allItems.filter(n=>!read.has(String(n.id??n.docId))):allItems,box=document.getElementById('notificationsSummary');box.innerHTML=items.length?items.map(n=>{const r=n.routeId?routeById(n.routeId):null,excerpt=String(n.text||'').length>120?String(n.text).slice(0,120)+'…':String(n.text||''),key=String(n.id??n.docId);return `<button class="notice-summary ${read.has(key)?'':'unread'}" onclick="openNoticeDetail('${escapeHTML(key)}')"><h3>${escapeHTML(n.title)}</h3><div class="notice-excerpt">${escapeHTML(excerpt)}</div><div class="notice-meta">${escapeHTML(n.type)} • ${escapeHTML(formatDateTime(n.date))} • Responsável: ${escapeHTML(n.author||'SIRE')}${r?' • Rota '+escapeHTML(r.number):' • Geral'}</div></button>`}).join(''):notificationsOnlyUnread?'<div class="alert success"><strong>Você está em dia.</strong><br>Não há novos avisos não lidos para o seu perfil.</div>':'<div class="alert info">Nenhum aviso disponível para o seu perfil.</div>'}
+function openNoticeDetail(id){const n=db.notifications.find(x=>String(x.id??x.docId)===String(id));if(!n)return;const visible=visibleNotifications().some(x=>String(x.id??x.docId)===String(id));if(!visible)return;const read=getReadSet();read.add(String(id));saveReadSet(read);updateNoticeBadge();renderNotificationSummaries();renderHome();const r=n.routeId?routeById(n.routeId):null;document.getElementById('noticeDetailTitle').textContent=n.title;const expiry=toJSDate(n.expiresAt);document.getElementById('noticeDetailMeta').textContent=`${formatDateTime(n.date)} • Responsável: ${n.author||'SIRE'}${expiry?' • Válido até '+expiry.toLocaleString('pt-BR'):''}`;document.getElementById('noticeDetailTags').innerHTML=`<span class="notice-tag">${escapeHTML(n.type)}</span><span class="notice-tag">${r?'Rota '+escapeHTML(r.number+' — '+r.name):'Aviso geral'}</span>`;document.getElementById('noticeDetailText').textContent=n.text;activateModal('noticeDetailModal')}
+function closeModal(id){const el=document.getElementById(id);if(!el)return;el.classList.add('hidden');const idx=[...modalFocusStack].map(x=>x.id).lastIndexOf(id);if(idx>=0){const [{element}]=modalFocusStack.splice(idx,1);setTimeout(()=>element?.focus?.(),0)}}
+function backdropClose(e,id){if(e.target.id===id)closeModal(id)}
+function markCurrentNoticeRead(id){const read=getReadSet();read.add(String(id));saveReadSet(read);updateNoticeBadge()}
 
 /* MOTORISTA */
 let driverMap,driverMarkers=[],driverLine=null;
-function renderDriverPanel(){if(currentUser.role!=='driver')return;const r=routeById(currentUser.routeId),d=driverByRoute(currentUser.routeId);if(!r)return;const stops=r.stops||[];document.getElementById('driverRouteSummary').innerHTML=`<div><strong>Rota</strong><br>${escapeHTML(r.number)} — ${escapeHTML(r.name)}</div><div><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div><div><strong>Paradas</strong><br>${stops.length}</div><div><strong>Chegada prevista</strong><br>${escapeHTML(stops[stops.length-1]?.time||'-')}</div>`;if(stops.length){if(!driverMap){driverMap=L.map('driverMap').setView([stops[0].lat,stops[0].lng],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(driverMap)}driverMarkers.forEach(m=>driverMap.removeLayer(m));driverMarkers=[];if(driverLine){driverMap.removeLayer(driverLine);driverLine=null}const bounds=[];stops.forEach(s=>{driverMarkers.push(L.marker([s.lat,s.lng]).addTo(driverMap).bindPopup(`<strong>${escapeHTML(s.name)}</strong><br>${escapeHTML(s.time)}`));bounds.push([s.lat,s.lng])});driverLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(driverMap);driverMap.fitBounds(bounds,{padding:[30,30]});setTimeout(()=>driverMap.invalidateSize(),80)}document.getElementById('driverSchedule').innerHTML=`<h3 style="color:var(--blue)">🕒 Horários e paradas</h3><div style="overflow:auto;margin-top:14px"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário previsto</th></tr></thead><tbody>${stops.map((s,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(s.name)}</td><td><strong>${escapeHTML(s.time)}</strong></td></tr>`).join('')}</tbody></table></div>`;renderDriverNoticeHistory()}
-async function publishDriverNotice(){if(currentUser.role!=='driver')return;const title=document.getElementById('driverNoticeTitle').value.trim(),type=document.getElementById('driverNoticeType').value,text=document.getElementById('driverNoticeText').value.trim();if(!title||!text)return alert('Preencha título e mensagem.');const id=uid(),n={id,title,type,text,date:new Date().toISOString(),active:true,routeId:Number(currentUser.routeId),author:currentUser.displayName,authorUid:currentUser.uid};try{await fb.setDoc(fb.doc(firestore,'notifications',String(id)),n);markCurrentNoticeRead(id);document.getElementById('driverNoticeTitle').value='';document.getElementById('driverNoticeText').value='';await loadData();renderDriverNoticeHistory();updateNoticeBadge();renderHome();alert('Aviso publicado para os usuários da sua rota.')}catch(err){alert(humanFirebaseError(err))}}
-function renderDriverNoticeHistory(){const box=document.getElementById('driverNoticeHistory');if(!box)return;const items=db.notifications.filter(n=>n.active&&String(n.routeId)===String(currentUser.routeId)).sort((a,b)=>new Date(b.date)-new Date(a.date));box.innerHTML=items.length?items.map(n=>`<div class="notification"><strong>${escapeHTML(n.title)}</strong><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${new Date(n.date).toLocaleString('pt-BR')} • ${escapeHTML(n.author||'SIRE')}</span></div>`).join(''):'<p class="muted">Nenhum aviso publicado para esta rota.</p>'}
+function renderDriverPanel(){
+ if(currentUser.role!=='driver')return;
+ const r=routeById(currentUser.routeId),d=driverByRoute(currentUser.routeId);if(!r)return;
+ const stops=Array.isArray(r.stops)?r.stops:[],geoStops=validGeoStops(stops);
+ document.getElementById('driverRouteSummary').innerHTML=`<div><strong>Rota</strong><br>${escapeHTML(r.number)} — ${escapeHTML(r.name)}</div><div><strong>Veículo</strong><br>${d?escapeHTML(d.vehicle||'-'):'Não informado'}</div><div><strong>Paradas</strong><br>${stops.length}</div><div><strong>Chegada prevista</strong><br>${escapeHTML(stops[stops.length-1]?.time||'-')}</div>`;
+ if(driverMap){driverMarkers.forEach(m=>driverMap.removeLayer(m));driverMarkers=[];if(driverLine){driverMap.removeLayer(driverLine);driverLine=null}}
+ if(geoStops.length){
+  if(!driverMap){driverMap=L.map('driverMap').setView([geoStops[0].lat,geoStops[0].lng],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(driverMap)}
+  const bounds=[];geoStops.forEach(s=>{driverMarkers.push(L.marker([s.lat,s.lng]).addTo(driverMap).bindPopup(`<strong>${escapeHTML(s.name||'Parada')}</strong><br>${escapeHTML(s.time||'Não informado')}`));bounds.push([s.lat,s.lng])});
+  if(bounds.length>=2)driverLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(driverMap);if(bounds.length)driverMap.fitBounds(bounds,{padding:[30,30]});setTimeout(()=>driverMap.invalidateSize(),60)
+ }
+ document.getElementById('driverSchedule').innerHTML=`<h3 style="color:var(--blue)">🕒 Horários e paradas</h3><div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário previsto</th></tr></thead><tbody>${stops.map((s,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(s.name||'-')}</td><td><strong>${escapeHTML(s.time||'Não informado')}</strong></td></tr>`).join('')}</tbody></table></div>`;renderDriverNoticeHistory()
+}
+async function publishDriverNotice(){if(currentUser.role!=='driver')return;const title=document.getElementById('driverNoticeTitle').value.trim(),type=document.getElementById('driverNoticeType').value,text=document.getElementById('driverNoticeText').value.trim();if(!title||!text)return alert('Preencha título e mensagem.');const id=uid(),n={id,title,type,text,date:new Date().toISOString(),active:true,routeId:Number(currentUser.routeId),author:currentUser.displayName,authorUid:currentUser.uid,expiresAt:null};try{await fb.setDoc(fb.doc(firestore,'notifications',String(id)),n);markCurrentNoticeRead(id);document.getElementById('driverNoticeTitle').value='';document.getElementById('driverNoticeText').value='';await loadData();renderDriverNoticeHistory();updateNoticeBadge();renderHome();alert('Aviso publicado para os usuários da sua rota.')}catch(err){alert(humanFirebaseError(err))}}
+function renderDriverNoticeHistory(){const box=document.getElementById('driverNoticeHistory');if(!box)return;const items=db.notifications.filter(n=>n.active===true&&!noticeIsExpired(n)&&String(n.routeId)===String(currentUser.routeId)).sort((a,b)=>(toJSDate(b.date)?.getTime()||0)-(toJSDate(a.date)?.getTime()||0));box.innerHTML=items.length?items.map(n=>`<div class="notification"><strong>${escapeHTML(n.title)}</strong><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${escapeHTML(formatDateTime(n.date))} • ${escapeHTML(n.author||'SIRE')}</span></div>`).join(''):'<p class="muted">Nenhum aviso publicado para esta rota.</p>'}
 
 /* ADMIN */
 async function refreshAdmin(){if(currentUser.role!=='admin')return;await loadData();populateRouteSelects();renderKPIs();renderRequests();renderRoutesTable();renderStops();renderDrivers();renderReports();renderAdminNoticeHistory();renderAccounts();configureAccountRole()}
-function adminTab(id){if(currentUser.role!=='admin')return;document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active-admin'));document.getElementById('admin-'+id)?.classList.add('active-admin');if(id==='dashboard')renderKPIs();if(id==='contas'){renderAccounts();configureAccountRole()}if(id==='solicitacoes')renderRequests();if(id==='rotas')renderRoutesTable();if(id==='paradas')renderStops();if(id==='motoristas')renderDrivers();if(id==='notificacoes'){populateRouteSelects();renderAdminNoticeHistory()}if(id==='relatorios')renderReports()}
+function adminTab(id){if(currentUser.role!=='admin')return;document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active-admin'));document.getElementById('admin-'+id)?.classList.add('active-admin');if(id==='dashboard')renderKPIs();if(id==='contas'){renderAccounts();configureAccountRole()}if(id==='solicitacoes')renderRequests();if(id==='rotas')renderRoutesTable();if(id==='paradas'){populateRouteSelects();renderStops();}if(id==='motoristas')renderDrivers();if(id==='notificacoes'){populateRouteSelects();renderAdminNoticeHistory()}if(id==='relatorios')renderReports()}
 function renderKPIs(){const open=db.feedbacks.filter(f=>f.status!=='Resolvido').length,avg=db.feedbacks.length?Math.round(db.feedbacks.reduce((a,f)=>a+(Date.now()-new Date(f.createdAt).getTime()),0)/db.feedbacks.length/86400000*10)/10:0;document.getElementById('kpis').innerHTML=`<div class="kpi"><span>Solicitações</span><strong>${db.feedbacks.length}</strong></div><div class="kpi"><span>Em aberto</span><strong>${open}</strong></div><div class="kpi"><span>Contas ativas</span><strong>${db.users.filter(u=>u.active!==false).length}</strong></div><div class="kpi"><span>Média desde abertura</span><strong>${avg}d</strong></div>`;document.getElementById('recentRequests').innerHTML=db.feedbacks.slice(-5).reverse().map(f=>`<div class="notification"><strong>${escapeHTML(f.protocol)}</strong> • ${escapeHTML(f.tipo)} • <span class="status ${statusClass(f.status)}">${escapeHTML(f.status)}</span></div>`).join('')||'<p class="muted">Nenhuma solicitação.</p>'}
 function renderRequests(){
  const box=document.getElementById('requestsTable');if(!box)return;
@@ -629,7 +692,7 @@ function renderRequests(){
   const r=routeById(f.routeId);
   return `<tr><td>${escapeHTML(f.protocol)}</td><td>${escapeHTML(f.nome)}</td><td>${r?escapeHTML(r.number+' — '+r.name):escapeHTML(String(f.routeId))}</td><td>${escapeHTML(f.tipo)}</td><td><span class="status ${statusClass(f.status)}">${escapeHTML(f.status)}</span></td><td><select onchange="changeStatus('${escapeHTML(f.protocol)}',this.value)"><option ${f.status==='Recebido'?'selected':''}>Recebido</option><option ${f.status==='Em análise'?'selected':''}>Em análise</option><option ${f.status==='Respondido'?'selected':''}>Respondido</option><option ${f.status==='Resolvido'?'selected':''}>Resolvido</option></select><div class="request-table-actions"><button class="btn secondary small" onclick="openRequestDetail('${escapeHTML(f.protocol)}')">Ver detalhes</button><button class="btn secondary small" onclick="answerRequest('${escapeHTML(f.protocol)}')">Responder</button></div></td></tr>`
  }).join('');
- box.innerHTML=`<div style="overflow:auto"><table><thead><tr><th>Protocolo</th><th>Solicitante</th><th>Rota</th><th>Tipo</th><th>Status</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma solicitação encontrada.</td></tr>'}</tbody></table></div>`
+ box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Protocolo</th><th>Solicitante</th><th>Rota</th><th>Tipo</th><th>Status</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Nenhuma solicitação encontrada.</td></tr>'}</tbody></table></div>`
 }
 async function changeStatus(protocol,status){const f=db.feedbacks.find(x=>x.protocol===protocol);if(!f)return;try{await fb.updateDoc(fb.doc(firestore,'feedbacks',f.docId),{status,updatedAt:new Date().toISOString()});await loadData();renderRequests();renderKPIs();renderHome();if(currentRequestProtocol===protocol&&!document.getElementById('requestDetailModal').classList.contains('hidden'))openRequestDetail(protocol)}catch(err){alert(humanFirebaseError(err))}}
 let currentRequestProtocol=null;
@@ -643,7 +706,7 @@ function openRequestDetail(protocol,focusAnswer=false){
  document.getElementById('requestDetailContent').innerHTML=`<div class="request-detail-grid"><div class="request-detail-item"><strong>Solicitante</strong><br>${escapeHTML(f.nome||'-')}</div><div class="request-detail-item"><strong>Rota</strong><br>${r?escapeHTML(r.number+' — '+r.name):escapeHTML(String(f.routeId??'-'))}</div><div class="request-detail-item"><strong>E-mail</strong><br>${escapeHTML(f.email||'Não informado')}</div><div class="request-detail-item"><strong>Telefone</strong><br>${escapeHTML(f.telefone||'Não informado')}</div><div class="request-detail-item"><strong>Localidade</strong><br>${escapeHTML(f.local||'-')}</div><div class="request-detail-item"><strong>Tipo</strong><br>${escapeHTML(f.tipo||'-')}</div><div class="request-detail-item"><strong>Criada em</strong><br>${escapeHTML(formatRequestDate(f.createdAt))}</div><div class="request-detail-item"><strong>Atualizada em</strong><br>${escapeHTML(formatRequestDate(f.updatedAt))}</div></div><h3 style="color:var(--blue);margin-top:8px">Descrição enviada</h3><div class="request-description">${escapeHTML(f.descricao||'Nenhuma descrição registrada.')}</div>${f.answer?`<div class="alert info"><strong>Resposta atual da administração:</strong><br>${escapeHTML(f.answer)}</div>`:''}`;
  const answer=document.getElementById('requestAdminAnswer');answer.value=f.answer||'';
  document.getElementById('requestAnswerResult').innerHTML='';
- document.getElementById('requestDetailModal').classList.remove('hidden');
+ activateModal('requestDetailModal');
  if(focusAnswer)setTimeout(()=>answer.focus(),80);
 }
 async function saveRequestAnswer(){
@@ -658,12 +721,59 @@ async function saveRequestAnswer(){
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
 }
 function answerRequest(protocol){openRequestDetail(protocol,true)}
-async function addRoute(){const number=document.getElementById('newRouteNumber').value.trim(),name=document.getElementById('newRouteName').value.trim(),school=document.getElementById('newRouteSchool').value.trim();if(!number||!name||!school)return alert('Preencha número, nome e escola.');if(db.routes.some(r=>r.number===number))return alert('Esse número de rota já existe.');const id=uid(),route={id,number,name,school,active:true,stops:[]};try{await fb.setDoc(fb.doc(firestore,'routes',String(id)),route);['newRouteNumber','newRouteName','newRouteSchool'].forEach(x=>document.getElementById(x).value='');await loadData();populateRouteSelects();renderRoutesTable();renderHome();alert('Rota cadastrada.')}catch(err){alert(humanFirebaseError(err))}}
-function renderRoutesTable(){document.getElementById('routesTable').innerHTML=`<table><thead><tr><th>Número</th><th>Nome</th><th>Escola</th><th>Paradas</th><th>Status</th><th>Ação</th></tr></thead><tbody>${db.routes.map(r=>`<tr><td>${escapeHTML(r.number)}</td><td>${escapeHTML(r.name)}</td><td>${escapeHTML(r.school)}</td><td>${(r.stops||[]).length}</td><td>${r.active===false?'<span class="status analysis">Inativa</span>':'<span class="status resolved">Ativa</span>'}</td><td><button class="btn secondary small" onclick="toggleRoute('${escapeHTML(r.docId)}',${r.active===false?'true':'false'})">${r.active===false?'Reativar':'Desativar'}</button></td></tr>`).join('')}</tbody></table>`}
-async function toggleRoute(docId,makeActive){const r=db.routes.find(x=>x.docId===docId);if(!r)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} a rota ${r.number} — ${r.name}? O registro será preservado no histórico.`))return;try{await fb.updateDoc(fb.doc(firestore,'routes',docId),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();populateRouteSelects();renderRoutesTable();renderHome();}catch(err){alert(humanFirebaseError(err))}}
-function renderStops(){document.getElementById('stopsTable').innerHTML=`<table><thead><tr><th>Rota</th><th>Parada</th><th>Horário</th></tr></thead><tbody>${db.routes.flatMap(r=>(r.stops||[]).map(s=>`<tr><td>${escapeHTML(r.number+' — '+r.name)}</td><td>${escapeHTML(s.name)}</td><td>${escapeHTML(s.time)}</td></tr>`)).join('')}</tbody></table>`}
+function routeNumberExists(number,exceptDocId=null){const normalized=String(number||'').trim().toLowerCase();return db.routes.some(r=>r.docId!==exceptDocId&&String(r.number||'').trim().toLowerCase()===normalized)}
+function showRouteFormResult(message,type='info'){const box=document.getElementById('routeFormResult');if(box)box.innerHTML=message?`<div class="alert ${type}">${escapeHTML(message)}</div>`:''}
+async function saveRoute(){
+ if(currentUser.role!=='admin')return;
+ const number=document.getElementById('newRouteNumber').value.trim(),name=document.getElementById('newRouteName').value.trim(),school=document.getElementById('newRouteSchool').value.trim();
+ if(!number||!name||!school)return showRouteFormResult('Preencha número, nome e escola.','error');
+ if(routeNumberExists(number,editingRouteDocId))return showRouteFormResult('Esse número de rota já está em uso.','error');
+ const now=new Date().toISOString();
+ try{
+  if(editingRouteDocId){
+   await fb.updateDoc(fb.doc(firestore,'routes',editingRouteDocId),{number,name,school,updatedAt:now});
+   showRouteFormResult('Rota atualizada com sucesso.','success');
+  }else{
+   const id=uid(),route={id,number,name,school,active:true,stops:[],updatedAt:now};await fb.setDoc(fb.doc(firestore,'routes',String(id)),route);
+   showRouteFormResult('Rota cadastrada com sucesso.','success');
+  }
+  cancelRouteEdit(false);await loadData();populateRouteSelects();renderRoutesTable();renderHome();renderStops();
+ }catch(err){showRouteFormResult(humanFirebaseError(err),'error')}
+}
+async function addRoute(){return saveRoute()}
+function editRoute(docId){
+ const r=db.routes.find(x=>x.docId===docId);if(!r)return;editingRouteDocId=docId;
+ document.getElementById('newRouteNumber').value=r.number||'';document.getElementById('newRouteName').value=r.name||'';document.getElementById('newRouteSchool').value=r.school||'';
+ document.getElementById('routeSaveButton').textContent='Salvar alterações';document.getElementById('routeCancelEditButton').classList.remove('hidden');showRouteFormResult('Editando a rota '+r.number+'.','info');
+ document.getElementById('newRouteNumber').focus();
+}
+function cancelRouteEdit(clearMessage=true){editingRouteDocId=null;['newRouteNumber','newRouteName','newRouteSchool'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const save=document.getElementById('routeSaveButton'),cancel=document.getElementById('routeCancelEditButton');if(save)save.textContent='Cadastrar rota';if(cancel)cancel.classList.add('hidden');if(clearMessage)showRouteFormResult('')}
+function renderRoutesTable(){const box=document.getElementById('routesTable');if(!box)return;box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Número</th><th>Nome</th><th>Escola</th><th>Paradas</th><th>Status</th><th>Ações</th></tr></thead><tbody>${db.routes.map(r=>`<tr><td>${escapeHTML(r.number)}</td><td>${escapeHTML(r.name)}</td><td>${escapeHTML(r.school)}</td><td>${(r.stops||[]).length}</td><td>${r.active===false?'<span class="status analysis">Inativa</span>':'<span class="status resolved">Ativa</span>'}</td><td><div class="inline-actions"><button class="btn secondary small" onclick="editRoute('${escapeHTML(r.docId)}')">Editar</button><button class="btn secondary small" onclick="toggleRoute('${escapeHTML(r.docId)}',${r.active===false?'true':'false'})">${r.active===false?'Reativar':'Desativar'}</button></div></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma rota cadastrada.</td></tr>'}</tbody></table></div>`}
+async function toggleRoute(docId,makeActive){const r=db.routes.find(x=>x.docId===docId);if(!r)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} a rota ${r.number} — ${r.name}? O registro será preservado no histórico.`))return;try{await fb.updateDoc(fb.doc(firestore,'routes',docId),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();populateRouteSelects();renderRoutesTable();renderHome();renderStops()}catch(err){alert(humanFirebaseError(err))}}
+function cleanStop(stop){const out={name:String(stop?.name||'').trim().slice(0,120),time:String(stop?.time||'').trim().slice(0,5)};if(hasGeoStop(stop)){out.lat=Number(stop.lat);out.lng=Number(stop.lng)}return out}
+function showStopFormResult(message,type='info'){const box=document.getElementById('stopFormResult');if(box)box.innerHTML=message?`<div class="alert ${type}">${escapeHTML(message)}</div>`:''}
+function selectedStopRoute(){return routeById(document.getElementById('stopRouteSelect')?.value)}
+async function persistStops(route,stops,message){if(!route)return;const clean=stops.map(cleanStop).filter(s=>s.name&&s.time);if(clean.length>100)throw new Error('Uma rota pode ter no máximo 100 paradas.');await fb.updateDoc(fb.doc(firestore,'routes',route.docId),{stops:clean,updatedAt:new Date().toISOString()});await loadData();configureRouteControls();const select=document.getElementById('stopRouteSelect');if(select)select.value=String(route.id);renderStops();renderHome();if(message)showStopFormResult(message,'success')}
+async function saveStop(){
+ if(currentUser.role!=='admin')return;const route=selectedStopRoute();if(!route)return showStopFormResult('Selecione uma rota.','error');
+ const name=document.getElementById('stopName').value.trim(),time=document.getElementById('stopTime').value,latRaw=document.getElementById('stopLat').value.trim(),lngRaw=document.getElementById('stopLng').value.trim();
+ if(!name||!time)return showStopFormResult('Informe o nome e o horário da parada.','error');
+ if(Boolean(latRaw)!==Boolean(lngRaw))return showStopFormResult('Preencha latitude e longitude juntas, ou deixe ambas vazias.','error');
+ const stop={name,time};if(latRaw&&lngRaw){const lat=Number(latRaw),lng=Number(lngRaw);if(!Number.isFinite(lat)||lat<-90||lat>90||!Number.isFinite(lng)||lng<-180||lng>180)return showStopFormResult('Coordenadas inválidas. Latitude: -90 a 90; longitude: -180 a 180.','error');stop.lat=lat;stop.lng=lng}
+ const stops=(route.stops||[]).map(cleanStop);if(editingStopIndex===null){if(stops.length>=100)return showStopFormResult('Esta rota já atingiu o limite de 100 paradas.','error');stops.push(stop)}else{if(editingStopIndex<0||editingStopIndex>=stops.length)return cancelStopEdit();stops[editingStopIndex]=stop}
+ try{await persistStops(route,stops,editingStopIndex===null?'Parada adicionada.':'Parada atualizada.');cancelStopEdit(false)}catch(err){showStopFormResult(humanFirebaseError(err),'error')}
+}
+function editStop(index){const route=selectedStopRoute(),stop=route?.stops?.[index];if(!stop)return;editingStopIndex=index;document.getElementById('stopName').value=stop.name||'';document.getElementById('stopTime').value=stop.time||'';document.getElementById('stopLat').value=Number.isFinite(Number(stop.lat))?stop.lat:'';document.getElementById('stopLng').value=Number.isFinite(Number(stop.lng))?stop.lng:'';document.getElementById('stopSaveButton').textContent='Salvar parada';document.getElementById('stopCancelButton').classList.remove('hidden');showStopFormResult(`Editando a parada ${index+1}.`,'info');document.getElementById('stopEditor').scrollIntoView({behavior:motionBehavior(),block:'center'});document.getElementById('stopName').focus()}
+function cancelStopEdit(clearMessage=true){editingStopIndex=null;['stopName','stopTime','stopLat','stopLng'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const save=document.getElementById('stopSaveButton'),cancel=document.getElementById('stopCancelButton');if(save)save.textContent='Adicionar parada';if(cancel)cancel.classList.add('hidden');if(clearMessage)showStopFormResult('')}
+async function removeStop(index){const route=selectedStopRoute();if(!route||!route.stops?.[index])return;if(!confirm(`Remover a parada “${route.stops[index].name}” desta rota?`))return;const stops=(route.stops||[]).map(cleanStop);stops.splice(index,1);try{await persistStops(route,stops,'Parada removida da rota.');cancelStopEdit(false)}catch(err){showStopFormResult(humanFirebaseError(err),'error')}}
+async function moveStop(index,direction){const route=selectedStopRoute(),stops=(route?.stops||[]).map(cleanStop);const target=index+direction;if(!route||index<0||target<0||index>=stops.length||target>=stops.length)return;[stops[index],stops[target]]=[stops[target],stops[index]];try{await persistStops(route,stops,'Ordem das paradas atualizada.');cancelStopEdit(false)}catch(err){showStopFormResult(humanFirebaseError(err),'error')}}
+function renderStops(){
+ const select=document.getElementById('stopRouteSelect'),box=document.getElementById('stopsTable');if(!select||!box)return;
+ if(!select.value&&db.routes.length)select.value=String(db.routes[0].id);const route=selectedStopRoute();if(!route){box.innerHTML='<div class="alert info">Selecione uma rota para gerenciar as paradas.</div>';return}
+ const stops=Array.isArray(route.stops)?route.stops:[];box.innerHTML=`<h3 style="color:var(--blue);margin-bottom:10px">${escapeHTML(route.number)} — ${escapeHTML(route.name)}</h3><div class="table-wrap"><table><thead><tr><th>Ordem</th><th>Parada</th><th>Horário</th><th>Coordenadas</th><th>Ações</th></tr></thead><tbody>${stops.map((s,i)=>{const hasGeo=hasGeoStop(s);return `<tr><td>${i+1}</td><td>${escapeHTML(s.name||'-')}</td><td>${escapeHTML(s.time||'-')}</td><td>${hasGeo?escapeHTML(Number(s.lat).toFixed(5)+', '+Number(s.lng).toFixed(5)):'Sem coordenadas'}</td><td><div class="inline-actions"><button class="btn secondary small" onclick="moveStop(${i},-1)" ${i===0?'disabled':''} aria-label="Mover parada para cima">↑</button><button class="btn secondary small" onclick="moveStop(${i},1)" ${i===stops.length-1?'disabled':''} aria-label="Mover parada para baixo">↓</button><button class="btn secondary small" onclick="editStop(${i})">Editar</button><button class="btn danger small" onclick="removeStop(${i})">Remover</button></div></td></tr>`}).join('')||'<tr><td colspan="5">Nenhuma parada cadastrada nesta rota.</td></tr>'}</tbody></table></div>`;
+}
 async function addDriver(){const name=document.getElementById('driverName').value.trim(),phone=document.getElementById('driverPhone').value.trim(),cnh=document.getElementById('driverCnh').value.trim(),routeId=document.getElementById('driverRouteId').value;if(!name)return alert('Informe o nome.');if(!routeId)return alert('Selecione a rota do motorista.');const id=uid(),driver={id,name,phone,cnh,vehicle:'Não informado',routeId:routeId?Number(routeId):null,active:true},driverPublic={id,name,vehicle:driver.vehicle,routeId:driver.routeId,active:true};try{const batch=fb.writeBatch(firestore);batch.set(fb.doc(firestore,'drivers',String(id)),driver);batch.set(fb.doc(firestore,'driverPublic',String(id)),driverPublic);await batch.commit();['driverName','driverPhone','driverCnh'].forEach(x=>document.getElementById(x).value='');await loadData();renderDrivers();alert('Motorista cadastrado. Dados privados e públicos foram separados.')}catch(err){alert(humanFirebaseError(err))}}
-function renderDrivers(){document.getElementById('driversTable').innerHTML=`<table><thead><tr><th>Nome</th><th>Telefone</th><th>CNH</th><th>Rota</th><th>Status</th><th>Ação</th></tr></thead><tbody>${db.drivers.map(d=>{const r=routeById(d.routeId);return `<tr><td>${escapeHTML(d.name)}</td><td>${escapeHTML(d.phone||'')}</td><td>${escapeHTML(d.cnh||'')}</td><td>${r?escapeHTML(r.number+' — '+r.name):'Não definida'}</td><td>${d.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</td><td><button class="btn secondary small" onclick="toggleDriver('${escapeHTML(d.docId)}',${d.active===false?'true':'false'})">${d.active===false?'Reativar':'Desativar'}</button></td></tr>`}).join('')||'<tr><td colspan="6">Nenhum motorista cadastrado.</td></tr>'}</tbody></table>`}
+function renderDrivers(){document.getElementById('driversTable').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Telefone</th><th>CNH</th><th>Rota</th><th>Status</th><th>Ação</th></tr></thead><tbody>${db.drivers.map(d=>{const r=routeById(d.routeId);return `<tr><td>${escapeHTML(d.name)}</td><td>${escapeHTML(d.phone||'')}</td><td>${escapeHTML(d.cnh||'')}</td><td>${r?escapeHTML(r.number+' — '+r.name):'Não definida'}</td><td>${d.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</td><td><button class="btn secondary small" onclick="toggleDriver('${escapeHTML(d.docId)}',${d.active===false?'true':'false'})">${d.active===false?'Reativar':'Desativar'}</button></td></tr>`}).join('')||'<tr><td colspan="6">Nenhum motorista cadastrado.</td></tr>'}</tbody></table></div>`}
 async function toggleDriver(docId,makeActive){const d=db.drivers.find(x=>x.docId===docId);if(!d)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} o cadastro de ${d.name}? O registro será preservado.`))return;try{const now=new Date().toISOString(),batch=fb.writeBatch(firestore);batch.update(fb.doc(firestore,'drivers',docId),{active:makeActive,updatedAt:now});batch.set(fb.doc(firestore,'driverPublic',docId),{id:d.id,name:d.name,vehicle:d.vehicle||'Não informado',routeId:Number(d.routeId),active:makeActive,updatedAt:now},{merge:true});await batch.commit();await loadData();renderDrivers();renderHome();}catch(err){alert(humanFirebaseError(err))}}
 async function migrateDriverPublicData(){
  if(currentUser.role!=='admin')return;
@@ -682,30 +792,53 @@ async function migrateDriverPublicData(){
   box.innerHTML=`<div class="alert success"><strong>Sincronização concluída.</strong><br>${snap.size} motorista(s) tiveram apenas nome, veículo, rota e status copiados para <code>driverPublic</code>. Telefone e CNH continuam restritos a Admin.</div>`;
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
 }
-async function addNotification(){if(currentUser.role!=='admin')return;const title=document.getElementById('noticeTitle').value.trim(),type=document.getElementById('noticeType').value,text=document.getElementById('noticeText').value.trim(),target=document.getElementById('noticeRoute').value;if(!title||!text)return alert('Preencha título e mensagem.');const id=uid(),n={id,title,type,text,date:new Date().toISOString(),active:true,routeId:target==='all'?null:Number(target),author:currentUser.displayName,authorUid:currentUser.uid};try{await fb.setDoc(fb.doc(firestore,'notifications',String(id)),n);markCurrentNoticeRead(id);document.getElementById('noticeTitle').value='';document.getElementById('noticeText').value='';await loadData();renderAdminNoticeHistory();updateNoticeBadge();renderHome();alert('Aviso publicado.')}catch(err){alert(humanFirebaseError(err))}}
-function renderAdminNoticeHistory(){const box=document.getElementById('adminNoticeHistory');if(!box)return;box.innerHTML='<h3 style="color:var(--blue);margin-bottom:12px">Histórico de comunicados</h3>'+db.notifications.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(n=>{const r=n.routeId?routeById(n.routeId):null;return `<div class="notification"><div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><strong>${escapeHTML(n.title)}</strong>${n.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</div><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${new Date(n.date).toLocaleString('pt-BR')} • ${escapeHTML(n.author||'SIRE')} • ${r?'Rota '+escapeHTML(r.number):'Geral'}</span><div style="margin-top:9px"><button class="btn secondary small" onclick="toggleNotification('${escapeHTML(n.docId)}',${n.active===false?'true':'false'})">${n.active===false?'Reativar':'Desativar'}</button></div></div>`}).join('')}
-async function toggleNotification(docId,makeActive){const n=db.notifications.find(x=>x.docId===docId);if(!n)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} o aviso “${n.title}”? O registro será preservado.`))return;try{await fb.updateDoc(fb.doc(firestore,'notifications',docId),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();renderAdminNoticeHistory();updateNoticeBadge();renderHome();}catch(err){alert(humanFirebaseError(err))}}
-function getStudentRouteStats(routeFilter='all'){
+async function addNotification(){
+ if(currentUser.role!=='admin')return;
+ const title=document.getElementById('noticeTitle').value.trim(),type=document.getElementById('noticeType').value,text=document.getElementById('noticeText').value.trim(),target=document.getElementById('noticeRoute').value,expiryRaw=document.getElementById('noticeExpiresAt').value;
+ const result=document.getElementById('noticePublishResult');if(!title||!text){if(result)result.innerHTML='<div class="alert error">Preencha título e mensagem.</div>';return}
+ let expiresAt=null;if(expiryRaw){const expiryDate=new Date(expiryRaw);if(Number.isNaN(expiryDate.getTime())||expiryDate.getTime()<=Date.now()){if(result)result.innerHTML='<div class="alert error">A validade precisa estar no futuro.</div>';return}expiresAt=fb.Timestamp.fromDate(expiryDate)}
+ const id=uid(),n={id,title,type,text,date:new Date().toISOString(),active:true,routeId:target==='all'?null:Number(target),author:currentUser.displayName,authorUid:currentUser.uid,expiresAt};
+ try{await fb.setDoc(fb.doc(firestore,'notifications',String(id)),n);markCurrentNoticeRead(id);document.getElementById('noticeTitle').value='';document.getElementById('noticeText').value='';document.getElementById('noticeExpiresAt').value='';await loadData();populateRouteSelects();renderAdminNoticeHistory();updateNoticeBadge();renderHome();if(result)result.innerHTML='<div class="alert success">Aviso publicado.</div>'}catch(err){if(result)result.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
+}
+function resetNoticeHistoryFilters(){['noticeHistoryStart','noticeHistoryEnd'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});for(const [id,value] of [['noticeHistoryRoute','all'],['noticeHistoryType','all'],['noticeHistoryStatus','all']]){const el=document.getElementById(id);if(el)el.value=value}renderAdminNoticeHistory()}
+function renderAdminNoticeHistory(){
+ const box=document.getElementById('adminNoticeHistory');if(!box)return;
+ const routeFilter=document.getElementById('noticeHistoryRoute')?.value||'all',typeFilter=document.getElementById('noticeHistoryType')?.value||'all',statusFilter=document.getElementById('noticeHistoryStatus')?.value||'all',start=document.getElementById('noticeHistoryStart')?.value,end=document.getElementById('noticeHistoryEnd')?.value;
+ const startDate=start?new Date(start+'T00:00:00'):null,endDate=end?new Date(end+'T23:59:59.999'):null;
+ const items=db.notifications.slice().filter(n=>{
+  const d=toJSDate(n.date),situation=noticeSituation(n);if(routeFilter==='general'&&n.routeId!==null&&n.routeId!==undefined)return false;if(routeFilter!=='all'&&routeFilter!=='general'&&String(n.routeId)!==String(routeFilter))return false;if(typeFilter!=='all'&&n.type!==typeFilter)return false;if(statusFilter!=='all'&&situation!==statusFilter)return false;if(startDate&&(!d||d<startDate))return false;if(endDate&&(!d||d>endDate))return false;return true
+ }).sort((a,b)=>(toJSDate(b.date)?.getTime()||0)-(toJSDate(a.date)?.getTime()||0));
+ box.innerHTML='<h3 style="color:var(--blue);margin-bottom:12px">Histórico de comunicados</h3>'+ (items.length?items.map(n=>{const r=n.routeId?routeById(n.routeId):null,situation=noticeSituation(n),badge=situation==='inactive'?'<span class="status inactive">Inativo</span>':situation==='expired'?'<span class="status expired">Expirado</span>':'<span class="status resolved">Ativo</span>',expiry=toJSDate(n.expiresAt);return `<div class="notification"><div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><strong>${escapeHTML(n.title)}</strong>${badge}</div><div>${escapeHTML(n.text)}</div><span class="muted">${escapeHTML(n.type)} • ${escapeHTML(formatDateTime(n.date))} • ${escapeHTML(n.author||'SIRE')} • ${r?'Rota '+escapeHTML(r.number):'Geral'}${expiry?' • validade até '+escapeHTML(expiry.toLocaleString('pt-BR')):' • sem validade definida'}</span><div style="margin-top:9px"><button class="btn secondary small" onclick="toggleNotification('${escapeHTML(n.docId)}',${n.active===false||situation==='expired'?'true':'false'})">${n.active===false||situation==='expired'?'Reativar':'Desativar'}</button></div></div>`}).join(''):'<div class="alert info">Nenhum aviso corresponde aos filtros.</div>')
+}
+async function toggleNotification(docId,makeActive){
+ const n=db.notifications.find(x=>x.docId===docId);if(!n)return;const expired=noticeIsExpired(n),action=makeActive?'Reativar':'Desativar';if(!confirm(`${action} o aviso “${n.title}”? O registro será preservado.`))return;
+ const patch={active:makeActive,updatedAt:new Date().toISOString()};if(makeActive&&expired)patch.expiresAt=null;
+ try{await fb.updateDoc(fb.doc(firestore,'notifications',docId),patch);await loadData();renderAdminNoticeHistory();updateNoticeBadge();renderHome()}catch(err){alert(humanFirebaseError(err))}
+}
+function getStudentRouteStats(routeFilter='all',statusFilter='all'){
  const routeList=db.routes.filter(r=>routeFilter==='all'||String(r.id)===String(routeFilter));
- return routeList.map(r=>{
-  const students=db.users.filter(u=>u.role==='student'&&String(u.routeId)===String(r.id));
-  const active=students.filter(u=>u.active!==false).length;
-  const inactive=students.filter(u=>u.active===false).length;
-  return {route:r,total:students.length,active,inactive};
- });
+ return routeList.map(r=>{let students=db.users.filter(u=>u.role==='student'&&String(u.routeId)===String(r.id));if(statusFilter==='active')students=students.filter(u=>u.active!==false);if(statusFilter==='inactive')students=students.filter(u=>u.active===false);const allStudents=db.users.filter(u=>u.role==='student'&&String(u.routeId)===String(r.id));return {route:r,total:students.length,active:allStudents.filter(u=>u.active!==false).length,inactive:allStudents.filter(u=>u.active===false).length,registered:allStudents.length}})
 }
 function renderStudentRouteReport(){
- const filter=document.getElementById('studentRouteFilter')?.value||'all',box=document.getElementById('studentRouteReport');if(!box)return;
- const stats=getStudentRouteStats(filter),total=stats.reduce((sum,x)=>sum+x.total,0),active=stats.reduce((sum,x)=>sum+x.active,0);
- box.innerHTML=`<div class="stats" style="margin:14px 0"><div class="kpi"><span>Alunos no filtro</span><strong>${total}</strong></div><div class="kpi"><span>Alunos ativos</span><strong>${active}</strong></div></div><div style="overflow:auto"><table><thead><tr><th>Rota</th><th>Nome</th><th>Alunos ativos</th><th>Inativos</th><th>Total cadastrado</th></tr></thead><tbody>${stats.map(x=>`<tr><td>${escapeHTML(x.route.number)}</td><td>${escapeHTML(x.route.name)}</td><td>${x.active}</td><td>${x.inactive}</td><td><strong>${x.total}</strong></td></tr>`).join('')||'<tr><td colspan="5">Nenhuma rota encontrada.</td></tr>'}</tbody></table></div>`;
+ const filter=document.getElementById('studentRouteFilter')?.value||'all',status=document.getElementById('studentStatusFilter')?.value||'all',box=document.getElementById('studentRouteReport');if(!box)return;
+ const stats=getStudentRouteStats(filter,status),shown=stats.reduce((sum,x)=>sum+x.total,0),active=stats.reduce((sum,x)=>sum+x.active,0),inactive=stats.reduce((sum,x)=>sum+x.inactive,0);
+ box.innerHTML=`<div class="stats" style="margin:14px 0"><div class="kpi"><span>Alunos no filtro</span><strong>${shown}</strong></div><div class="kpi"><span>Ativos cadastrados</span><strong>${active}</strong></div><div class="kpi"><span>Inativos cadastrados</span><strong>${inactive}</strong></div></div><div class="table-wrap"><table><thead><tr><th>Rota</th><th>Nome</th><th>Alunos ativos</th><th>Inativos</th><th>Total cadastrado</th></tr></thead><tbody>${stats.map(x=>`<tr><td>${escapeHTML(x.route.number)}</td><td>${escapeHTML(x.route.name)}</td><td>${x.active}</td><td>${x.inactive}</td><td><strong>${x.registered}</strong></td></tr>`).join('')||'<tr><td colspan="5">Nenhuma rota encontrada.</td></tr>'}</tbody></table></div>`
+}
+function getFilteredFeedbacks(){
+ const route=document.getElementById('reportRouteFilter')?.value||'all',type=document.getElementById('reportTypeFilter')?.value||'all',status=document.getElementById('reportStatusFilter')?.value||'all',start=document.getElementById('reportStartDate')?.value,end=document.getElementById('reportEndDate')?.value;
+ const startDate=start?new Date(start+'T00:00:00'):null,endDate=end?new Date(end+'T23:59:59.999'):null;
+ return db.feedbacks.filter(f=>{const d=toJSDate(f.createdAt);if(route!=='all'&&String(f.routeId)!==String(route))return false;if(type!=='all'&&f.tipo!==type)return false;if(status!=='all'&&f.status!==status)return false;if(startDate&&(!d||d<startDate))return false;if(endDate&&(!d||d>endDate))return false;return true})
+}
+function resetReportFilters(){for(const id of ['reportStartDate','reportEndDate']){const el=document.getElementById(id);if(el)el.value=''};for(const [id,value] of [['reportRouteFilter','all'],['reportTypeFilter','all'],['reportStatusFilter','all']]){const el=document.getElementById(id);if(el)el.value=value}renderAdvancedFeedbackReport()}
+function renderAdvancedFeedbackReport(){
+ const box=document.getElementById('advancedFeedbackReport');if(!box)return;const items=getFilteredFeedbacks(),resolved=items.filter(f=>f.status==='Resolvido').length,open=items.length-resolved,types={},routes={};items.forEach(f=>{types[f.tipo]=(types[f.tipo]||0)+1;const r=routeById(f.routeId),label=r?r.number+' — '+r.name:String(f.routeId);routes[label]=(routes[label]||0)+1});
+ box.innerHTML=`<div class="stats" style="margin:14px 0"><div class="kpi"><span>Solicitações no filtro</span><strong>${items.length}</strong></div><div class="kpi"><span>Em aberto</span><strong>${open}</strong></div><div class="kpi"><span>Resolvidas</span><strong>${resolved}</strong></div></div><div class="cards"><div class="card"><h3>Por tipo</h3>${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div><div class="card"><h3>Por rota</h3>${Object.entries(routes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div></div><div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>Protocolo</th><th>Rota</th><th>Tipo</th><th>Status</th><th>Data</th></tr></thead><tbody>${items.slice().sort((a,b)=>(toJSDate(b.createdAt)?.getTime()||0)-(toJSDate(a.createdAt)?.getTime()||0)).map(f=>{const r=routeById(f.routeId);return `<tr><td>${escapeHTML(f.protocol||'-')}</td><td>${r?escapeHTML(r.number+' — '+r.name):escapeHTML(String(f.routeId??'-'))}</td><td>${escapeHTML(f.tipo||'-')}</td><td><span class="status ${statusClass(f.status)}">${escapeHTML(f.status||'-')}</span></td><td>${escapeHTML(formatDateTime(f.createdAt))}</td></tr>`}).join('')||'<tr><td colspan="5">Nenhuma solicitação no período.</td></tr>'}</tbody></table></div>`
 }
 function renderReports(){
- const types={};db.feedbacks.forEach(f=>types[f.tipo]=(types[f.tipo]||0)+1);
- const routes={};db.feedbacks.forEach(f=>{const r=routeById(f.routeId);if(r)routes[r.name]=(routes[r.name]||0)+1});
- const studentTotal=db.users.filter(u=>u.role==='student').length,studentActive=db.users.filter(u=>u.role==='student'&&u.active!==false).length;
- const routeOptions=db.routes.map(r=>`<option value="${escapeHTML(String(r.id))}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}</option>`).join('');
- document.getElementById('reportContent').innerHTML=`<div class="stats"><div class="kpi"><span>Total de feedbacks</span><strong>${db.feedbacks.length}</strong></div><div class="kpi"><span>Em aberto</span><strong>${db.feedbacks.filter(f=>f.status!=='Resolvido').length}</strong></div><div class="kpi"><span>Alunos cadastrados</span><strong>${studentTotal}</strong></div><div class="kpi"><span>Alunos ativos</span><strong>${studentActive}</strong></div></div><div class="panel" style="margin-top:18px;padding:18px"><h3 style="color:var(--blue)">🎓 Alunos por rota</h3><p class="muted">O relatório considera somente contas com perfil Aluno. Use o filtro para consultar uma rota específica.</p><div class="form-grid" style="margin-top:12px"><div><label>Filtrar por rota</label><select id="studentRouteFilter" onchange="renderStudentRouteReport()"><option value="all">Todas as rotas</option>${routeOptions}</select></div></div><div id="studentRouteReport"></div></div><div class="cards" style="margin-top:18px"><div class="card"><h3>Feedbacks por tipo</h3>${Object.entries(types).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div><div class="card"><h3>Ocorrências por rota</h3>${Object.entries(routes).map(([k,v])=>`<p>${escapeHTML(k)}: <strong>${v}</strong></p>`).join('')||'<p>Nenhum dado.</p>'}</div></div>`;
- renderStudentRouteReport();
+ const studentTotal=db.users.filter(u=>u.role==='student').length,studentActive=db.users.filter(u=>u.role==='student'&&u.active!==false).length,routeOptions=db.routes.map(r=>`<option value="${escapeHTML(String(r.id))}">${escapeHTML(r.number)} — ${escapeHTML(r.name)}</option>`).join('');
+ const box=document.getElementById('reportContent');if(!box)return;
+ box.innerHTML=`<div class="stats"><div class="kpi"><span>Total de solicitações</span><strong>${db.feedbacks.length}</strong></div><div class="kpi"><span>Em aberto</span><strong>${db.feedbacks.filter(f=>f.status!=='Resolvido').length}</strong></div><div class="kpi"><span>Alunos cadastrados</span><strong>${studentTotal}</strong></div><div class="kpi"><span>Alunos ativos</span><strong>${studentActive}</strong></div></div><div class="panel" style="margin-top:18px;padding:18px"><h3 style="color:var(--blue)">📊 Solicitações — filtros avançados</h3><div class="filter-grid"><div><label>Rota</label><select id="reportRouteFilter" onchange="renderAdvancedFeedbackReport()"><option value="all">Todas</option>${routeOptions}</select></div><div><label>Tipo</label><select id="reportTypeFilter" onchange="renderAdvancedFeedbackReport()"><option value="all">Todos</option><option>Reclamação</option><option>Sugestão</option><option>Elogio</option><option>Dúvida</option></select></div><div><label>Status</label><select id="reportStatusFilter" onchange="renderAdvancedFeedbackReport()"><option value="all">Todos</option><option>Recebido</option><option>Em análise</option><option>Respondido</option><option>Resolvido</option></select></div><div><label>De</label><input id="reportStartDate" type="date" onchange="renderAdvancedFeedbackReport()"></div><div><label>Até</label><input id="reportEndDate" type="date" onchange="renderAdvancedFeedbackReport()"></div></div><button class="btn secondary small" onclick="resetReportFilters()">Limpar filtros</button><div id="advancedFeedbackReport"></div></div><div class="panel" style="margin-top:18px;padding:18px"><h3 style="color:var(--blue)">🎓 Alunos por rota</h3><p class="muted">Contagem de contas com perfil Aluno, com filtro de rota e situação da conta.</p><div class="filter-grid"><div><label>Rota</label><select id="studentRouteFilter" onchange="renderStudentRouteReport()"><option value="all">Todas as rotas</option>${routeOptions}</select></div><div><label>Situação</label><select id="studentStatusFilter" onchange="renderStudentRouteReport()"><option value="all">Ativos e inativos</option><option value="active">Somente ativos</option><option value="inactive">Somente inativos</option></select></div></div><div id="studentRouteReport"></div></div>`;
+ renderAdvancedFeedbackReport();renderStudentRouteReport()
 }
 
 /* CONTAS — versão Spark: Authentication é criado manualmente no Console.
@@ -752,7 +885,7 @@ async function createAccount(){
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
 }
 async function loadAccounts(){try{await loadData();renderAccounts()}catch(err){document.getElementById('accountResult').innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}}
-function renderAccounts(){const box=document.getElementById('accountsTable');if(!box)return;const rows=db.users.slice().sort((a,b)=>String(a.displayName||a.email).localeCompare(String(b.displayName||b.email),'pt-BR')).map(u=>{const r=routeById(u.routeId);const created=u.createdAt?new Date(u.createdAt).toLocaleDateString('pt-BR'):'-';return `<tr><td>${escapeHTML(u.displayName||'-')}</td><td>${escapeHTML(u.email||'-')}</td><td>${escapeHTML(roleLabel(u.role))}</td><td>${r?escapeHTML(r.number+' — '+r.name):(u.role==='admin'?'Todas':'-')}</td><td>${u.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</td><td>${created}</td><td>${u.docId===currentUser.uid?'Conta atual':`<button class="btn secondary small" onclick="toggleAccount('${u.docId}',${u.active===false?'true':'false'})">${u.active===false?'Reativar':'Desativar'}</button>`}</td></tr>`}).join('');box.innerHTML=`<div style="overflow:auto"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Rota</th><th>Status</th><th>Criada em</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="7">Nenhuma conta encontrada.</td></tr>'}</tbody></table></div><p class="muted" style="margin-top:10px"><strong>Importante:</strong> O status “Inativo” bloqueia o acesso aos dados pelas Security Rules, mas não apaga/desativa o registro em Authentication. Para bloquear também o login no Firebase, desative a conta manualmente em Authentication → Users.</p>`}
+function renderAccounts(){const box=document.getElementById('accountsTable');if(!box)return;const rows=db.users.slice().sort((a,b)=>String(a.displayName||a.email).localeCompare(String(b.displayName||b.email),'pt-BR')).map(u=>{const r=routeById(u.routeId);const created=u.createdAt?new Date(u.createdAt).toLocaleDateString('pt-BR'):'-';return `<tr><td>${escapeHTML(u.displayName||'-')}</td><td>${escapeHTML(u.email||'-')}</td><td>${escapeHTML(roleLabel(u.role))}</td><td>${r?escapeHTML(r.number+' — '+r.name):(u.role==='admin'?'Todas':'-')}</td><td>${u.active===false?'<span class="status analysis">Inativo</span>':'<span class="status resolved">Ativo</span>'}</td><td>${created}</td><td>${u.docId===currentUser.uid?'Conta atual':`<button class="btn secondary small" onclick="toggleAccount('${u.docId}',${u.active===false?'true':'false'})">${u.active===false?'Reativar':'Desativar'}</button>`}</td></tr>`}).join('');box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Rota</th><th>Status</th><th>Criada em</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="7">Nenhuma conta encontrada.</td></tr>'}</tbody></table></div><p class="muted" style="margin-top:10px"><strong>Importante:</strong> O status “Inativo” bloqueia o acesso aos dados pelas Security Rules, mas não apaga/desativa o registro em Authentication. Para bloquear também o login no Firebase, desative a conta manualmente em Authentication → Users.</p>`}
 async function toggleAccount(targetUid,makeActive){const u=db.users.find(x=>x.docId===targetUid);if(!u)return;if(!confirm(`${makeActive?'Reativar':'Desativar'} a conta de ${u.displayName||u.email}?`))return;try{await fb.updateDoc(fb.doc(firestore,'users',targetUid),{active:makeActive,updatedAt:new Date().toISOString()});await loadData();renderAccounts();renderHome()}catch(err){alert(humanFirebaseError(err))}}
 
 async function seedInitialData(){
@@ -771,12 +904,13 @@ async function seedInitialData(){
    {id:1002,name:'Roberto Silva',phone:'(85) 98888-1010',cnh:'000000101',vehicle:'Ônibus 18',routeId:101,active:true},
    {id:1003,name:'João Pereira',phone:'(85) 98888-1020',cnh:'000000102',vehicle:'Ônibus 21',routeId:102,active:true}
   ];
-  const notice={id:1,title:'SIRE em funcionamento',type:'Aviso importante',text:'O SIRE está disponível para consulta de rotas e registro de ocorrências.',date:new Date().toISOString(),active:true,routeId:null,author:currentUser.displayName,authorUid:currentUser.uid};
+  const notice={id:1,title:'SIRE em funcionamento',type:'Aviso importante',text:'O SIRE está disponível para consulta de rotas e registro de ocorrências.',date:new Date().toISOString(),active:true,routeId:null,author:currentUser.displayName,authorUid:currentUser.uid,expiresAt:null};
   routes.forEach(x=>batch.set(fb.doc(firestore,'routes',String(x.id)),x));drivers.forEach(x=>{batch.set(fb.doc(firestore,'drivers',String(x.id)),x);batch.set(fb.doc(firestore,'driverPublic',String(x.id)),{id:x.id,name:x.name,vehicle:x.vehicle,routeId:x.routeId,active:x.active});});batch.set(fb.doc(firestore,'notifications','1'),notice);await batch.commit();
   box.innerHTML='<div class="alert success">Dados iniciais cadastrados no Firestore.</div>';await loadData();refreshAdmin();renderHome();
  }catch(err){box.innerHTML=`<div class="alert error">${escapeHTML(humanFirebaseError(err))}</div>`}
 }
-window.addEventListener('load',()=>{showLoggedOut();initFirebase()});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const visible=[...document.querySelectorAll('.modal-backdrop:not(.hidden)')];if(visible.length)closeModal(visible[visible.length-1].id)});
+window.addEventListener('load',()=>{setLoginReadyState(false,'Inicializando SIRE...');showLoggedOut();initFirebase()});
 </script>
 </body>
 </html>
