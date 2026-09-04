@@ -25,13 +25,28 @@ A proposta do SIRE é reunir **rotas, horários, mapas, avisos, atendimento e ge
 
 > Esta documentação foi preparada a partir do estado do repositório em 03/09/2026. As Firestore Security Rules não estão presentes na raiz do repositório analisado, portanto a documentação definitiva de segurança deve ser complementada quando essas regras forem adicionadas ou fornecidas.
 
-## Estrutura atual do repositório
+## Estrutura documentada do repositório
 
 ```text
 sire/
 |-- index.html
 |-- firebase-config.js
-`-- appcheck-config.js
+|-- appcheck-config.js
+|-- README.md
+|-- CHANGELOG.md
+`-- docs/
+    |-- README.md
+    |-- arquitetura.md
+    |-- funcionalidades.md
+    |-- seguranca.md
+    |-- roadmap.md
+    `-- guias/
+        |-- Aluno.md
+        |-- Aluno.pdf
+        |-- Motorista.md
+        |-- Motorista.pdf
+        |-- Admin.md
+        `-- Admin.pdf
 ```
 
 ### `index.html`
