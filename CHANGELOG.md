@@ -2,6 +2,16 @@
 
 Registro resumido da evolução do projeto com base na versão atual e no histórico disponível do repositório.
 
+## Organização documental pré-apresentação — sem nova versão funcional
+
+- criação de resumo de apresentação e roteiro de demonstração;
+- registro separado dos testes manuais relatados pelo responsável, com limites e retestes recomendados;
+- atualização da documentação de arquitetura, funcionalidades, segurança e roadmap;
+- organização do índice de documentação e dos links dos guias;
+- nenhuma alteração no código, na configuração Firebase, nas Firestore Security Rules ou no site publicado por esta revisão documental.
+
+> A versão funcional documentada continua sendo a **V5.8.1 Spark**. Esta atualização é documental e não representa uma release V5.8.2.
+
 ## V5.8.1
 
 - centralização dos atalhos do Motorista;
