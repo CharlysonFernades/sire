@@ -1,0 +1,28 @@
+name: Validacao estatica do SIRE
+
+on:
+  push:
+    branches:
+      - main
+      - review/pre-apresentacao-v5-8-2
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    name: Sintaxe do JavaScript inline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositorio
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validar scripts e arquivos de configuracao
+        run: node scripts/check-inline-js.mjs
