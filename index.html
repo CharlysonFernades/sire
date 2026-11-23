@@ -43,7 +43,7 @@ nav button:hover,.btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgb
 .section-title{text-align:center;margin-bottom:28px}.section-title h2{color:var(--blue);font-size:clamp(2rem,4vw,2.7rem);margin-bottom:8px}.section-title p{color:#555}
 .highlight-info,.cards,.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-top:28px}.info-box{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:22px;border-radius:20px;box-shadow:0 10px 20px rgba(11,61,145,.2)}.info-box h3{font-size:1.8rem;margin-bottom:7px}
 .card,.panel,.form-box{background:rgba(255,255,255,.96);padding:24px;border-radius:22px;box-shadow:0 10px 25px rgba(0,0,0,.08)}.card h3{color:var(--blue);margin-bottom:8px}
-.action-card{cursor:pointer;border:2px solid transparent;transition:.25s;min-height:145px;position:relative;overflow:hidden}.action-card:hover{transform:translateY(-6px);border-color:#cbd9ef;box-shadow:0 17px 32px rgba(11,61,145,.13)}.action-card:after{content:'Abrir →';position:absolute;bottom:17px;right:19px;color:var(--blue);font-size:.78rem;font-weight:700;opacity:.72}.action-card h3{font-size:1.2rem}.action-card p{padding-right:18px}
+.action-card{width:100%;display:block;text-align:left;color:inherit;font:inherit;appearance:none;cursor:pointer;border:2px solid transparent;transition:.25s;min-height:145px;position:relative;overflow:hidden}.action-card:hover{transform:translateY(-6px);border-color:#cbd9ef;box-shadow:0 17px 32px rgba(11,61,145,.13)}.action-card:after{content:'Abrir →';position:absolute;bottom:17px;right:19px;color:var(--blue);font-size:.78rem;font-weight:700;opacity:.72}.action-card h3{font-size:1.2rem}.action-card p{padding-right:18px}
 .context-panel{margin-top:24px}.context-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:15px}.context-item{background:#f3f6fb;padding:15px;border-radius:14px}.context-item strong{color:var(--blue)}
 .route-toolbar{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:18px}.route-toolbar.restricted{grid-template-columns:1fr}
 input,select,textarea{width:100%;padding:13px 14px;border-radius:12px;border:2px solid #e5eaf2;background:#f5f7fb;font-size:.95rem;transition:.2s}input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 10px rgba(11,61,145,.12)}textarea{min-height:140px;resize:vertical}label{display:block;font-size:.86rem;font-weight:600;color:#3f4f63;margin-bottom:6px}
@@ -51,7 +51,7 @@ input,select,textarea{width:100%;padding:13px 14px;border-radius:12px;border:2px
 .status{display:inline-block;padding:5px 10px;border-radius:999px;font-size:.8rem;font-weight:700}.received{background:#e5efff;color:#1456c0}.analysis{background:#fff2cf;color:#9a6200}.answered{background:#e7f6ed;color:#16834b}.resolved{background:#dff5e7;color:#13743f}
 .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.full{grid-column:1/-1}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.alert{padding:14px 16px;border-radius:14px;margin:12px 0}.alert.success{background:#e9f8ef;color:#146b3d}.alert.error{background:#fff0f0;color:#a51e1e}.alert.info{background:#edf4ff;color:#174f9c}.protocol{font-size:1.35rem;font-weight:700;color:var(--blue);background:#eef4ff;padding:14px;border-radius:14px;text-align:center;margin:12px 0}
 .timeline{border-left:3px solid #dce5f3;margin:18px 0;padding-left:18px}.timeline-item{position:relative;margin:16px 0}.timeline-item:before{content:'';position:absolute;left:-27px;top:4px;width:12px;height:12px;border-radius:50%;background:#b9c8df}.timeline-item.done:before{background:var(--green)}
-.search-results{display:grid;gap:10px;margin-top:15px}.result{padding:14px;border:1px solid #e1e7f0;border-radius:14px;background:#fff;cursor:pointer}.result:hover{border-color:var(--blue)}
+.search-results{display:grid;gap:10px;margin-top:15px}.result{display:block;width:100%;padding:14px;border:1px solid #e1e7f0;border-radius:14px;background:#fff;color:inherit;font:inherit;text-align:left;cursor:pointer;appearance:none}.result:hover{border-color:var(--blue)}
 .admin-layout{display:grid;grid-template-columns:220px 1fr;gap:18px}.sidebar{background:var(--dark);color:#fff;border-radius:20px;padding:16px;height:max-content}.sidebar button{width:100%;text-align:left;background:transparent;border:0;color:#fff;padding:11px;border-radius:10px;cursor:pointer}.sidebar button:hover{background:rgba(255,255,255,.12)}.admin-section{display:none}.admin-section.active-admin{display:block}table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f5;font-size:.86rem;vertical-align:top}th{background:#f4f7fb;color:var(--blue)}.kpi{background:#fff;padding:18px;border-radius:18px;box-shadow:0 8px 18px rgba(0,0,0,.07)}.kpi strong{display:block;font-size:1.7rem;color:var(--blue)}
 .notification{border-left:5px solid var(--blue);padding:14px;background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 5px 14px rgba(0,0,0,.05)}
 footer{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;text-align:center;padding:22px;font-weight:500;margin-top:20px}
@@ -177,7 +177,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
   <div class="cards">
     <div class="card"><h3>Preencha seus dados</h3><p>Informe apenas os dados necessários para contato e identificação da solicitação.</p></div>
     <div class="card"><h3>Envie o feedback</h3><p>Reclamações, sugestões, elogios e dúvidas ficam organizados no mesmo fluxo de atendimento.</p></div>
-    <div class="card action-card" onclick="showPage('acompanhar')"><h3>Acompanhamento</h3><p>Use o protocolo recebido para consultar o status da solicitação.</p></div>
+    <button type="button" class="card action-card" onclick="showPage('acompanhar')"><h3>Acompanhamento</h3><p>Use o protocolo recebido para consultar o status da solicitação.</p></button>
   </div>
 </div>
 
@@ -268,7 +268,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
 </div>
 </main>
 
-<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.8.1 Spark: segurança revisada, gestão de rotas/paradas, relatórios e avisos avançados, acessibilidade aprimorada.</p></footer>
+<footer><p>© 2026 — SIRE • Sistema Integrado de Rotas Escolares</p><p class="small">Versão Firebase V5.8.2 Spark: atalhos acessíveis por teclado, mantendo as funcionalidades da V5.8.1.</p></footer>
 </div>
 
 <!-- POP-UP RESUMIDO DE AVISOS -->
@@ -319,7 +319,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
 <script src="./appcheck-config.js"></script>
 <script>
 /* ==========================================================
-   SIRE V5.8 — Firebase Spark / GitHub Pages
+   SIRE V5.8.2 — Firebase Spark / GitHub Pages
    - Firebase Authentication (e-mail e senha)
    - Cloud Firestore (dados compartilhados)
    - Sem Cloud Functions: compatível com a arquitetura Spark proposta
@@ -328,6 +328,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
    - V5.6: horários visíveis em Rotas + filtro administrativo de alunos por rota
    - V5.6.1: botão Início/Voltar dinâmico + centralização do formulário de aviso do motorista
    - V5.8.1: V5.8 + centralização dos atalhos Horários/Publicar aviso/Histórico do motorista
+   - V5.8.2: cards de ação convertidos em botões nativos, com ativação por Enter/Espaço
    - Login: botão Mostrar/Ocultar senha (somente visual, sem armazenar a senha)
 ========================================================== */
 const FIREBASE_SDK_VERSION='12.17.1';
@@ -543,7 +544,7 @@ function renderHome(){
   context.innerHTML=`<h3 style="color:var(--blue)">Visão geral da operação</h3><div class="context-grid"><div class="context-item"><strong>Rotas</strong><br>${db.routes.length}</div><div class="context-item"><strong>Motoristas</strong><br>${db.drivers.length}</div><div class="context-item"><strong>Solicitações</strong><br>${db.feedbacks.length}</div><div class="context-item"><strong>Usuários</strong><br>${db.users.length}</div></div>`;
  }
 }
-function homeCard(icon,title,text,action){return `<div class="card action-card" role="button" tabindex="0" onclick="${action}" onkeydown="if(event.key==='Enter'){${action}}"><h3>${icon} ${title}</h3><p>${text}</p></div>`}
+function homeCard(icon,title,text,action){return `<button type="button" class="card action-card" onclick="${action}"><h3>${icon} ${title}</h3><p>${text}</p></button>`}
 function openRoutePage(focusMap){showPage('rotas');if(focusMap)setTimeout(()=>document.getElementById('map').scrollIntoView({behavior:motionBehavior(),block:'center'}),180)}
 function openDriverSection(id){
  showPage('motorista');
@@ -583,7 +584,7 @@ function renderRoute(){
  initMap();markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine){map.removeLayer(routeLine);routeLine=null}const bounds=[];validGeoStops(stops).forEach((st,i)=>{const m=L.marker([st.lat,st.lng]).addTo(map).bindPopup(`<strong>${escapeHTML(st.name||'Parada')}</strong><br>Horário previsto: ${escapeHTML(st.time||'Não informado')}<br>Ordem: ${i+1}`);markers.push(m);bounds.push([st.lat,st.lng])});if(bounds.length){routeLine=L.polyline(bounds,{weight:4,opacity:.72}).addTo(map);map.fitBounds(bounds,{padding:[30,30]})}setTimeout(()=>map.invalidateSize(),60);
 }
 function selectRoute(id){document.getElementById('routeSelect').value=id;renderRoute()}
-function searchRoutes(){if(currentUser.role!=='admin')return;const q=document.getElementById('routeSearch').value.trim().toLowerCase(),box=document.getElementById('searchResults');if(!q){box.innerHTML='';return}const matches=db.routes.filter(r=>[r.number,r.name,r.school,...(r.stops||[]).map(s=>s.name)].join(' ').toLowerCase().includes(q));box.innerHTML=matches.length?matches.map(r=>`<div class="result" onclick="selectRoute('${r.id}')"><strong>Rota ${escapeHTML(r.number)} — ${escapeHTML(r.name)}</strong><br><span class="muted">${escapeHTML(r.school)} • ${(r.stops||[]).length} paradas</span></div>`).join(''):'<div class="alert info">Nenhuma rota encontrada.</div>'}
+function searchRoutes(){if(currentUser.role!=='admin')return;const q=document.getElementById('routeSearch').value.trim().toLowerCase(),box=document.getElementById('searchResults');if(!q){box.innerHTML='';return}const matches=db.routes.filter(r=>[r.number,r.name,r.school,...(r.stops||[]).map(s=>s.name)].join(' ').toLowerCase().includes(q));box.innerHTML=matches.length?matches.map(r=>`<button type="button" class="result" data-route-id="${escapeHTML(r.id)}" onclick="selectRoute(this.dataset.routeId)"><strong>Rota ${escapeHTML(r.number)} — ${escapeHTML(r.name)}</strong><br><span class="muted">${escapeHTML(r.school)} • ${(r.stops||[]).length} paradas</span></button>`).join(''):'<div class="alert info">Nenhuma rota encontrada.</div>'}
 function locateUser(){if(!navigator.geolocation){alert('Seu navegador não oferece geolocalização.');return}navigator.geolocation.getCurrentPosition(pos=>{const{latitude,longitude}=pos.coords;initMap();map.setView([latitude,longitude],15);L.marker([latitude,longitude]).addTo(map).bindPopup('Sua localização aproximada').openPopup()},()=>alert('Não foi possível obter sua localização.'))}
 
 /* AJUDA E PROTOCOLO */
