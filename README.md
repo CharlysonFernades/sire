@@ -137,7 +137,7 @@ A página inicial muda conforme o usuário:
 - **Motorista:** Rotas, Horários, Publicar aviso, Histórico de avisos e Ajuda.
 - **Administrador:** atalhos operacionais e acesso ao Painel Administrativo.
 
-Os cards de acesso rápido aparecem antes das informações gerais do perfil.
+Os cards de acesso rápido aparecem antes das informações gerais do perfil. Eles possuem foco por teclado e acionamento por Enter; não foi identificado acionamento explícito pela tecla Espaço no código examinado, e a complementação está no roadmap.
 
 ### Rotas, paradas e horários
 
