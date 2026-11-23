@@ -13,20 +13,19 @@ A proposta é melhorar a organização das informações e a comunicação entre
 | Perfil | Recursos disponíveis na V5.8.1 |
 |---|---|
 | **Aluno** | Consulta a própria rota, paradas e horários previstos; visualiza avisos; registra reclamações, sugestões, elogios ou dúvidas; acompanha os próprios protocolos. |
-| **Motorista** | Consulta a rota vinculada, paradas e horários; visualiza avisos da operação; publica comunicados relacionados à própria rota; consulta os avisos ativos e não expirados disponíveis no histórico do perfil. |
+| **Motorista** | Consulta a rota vinculada, paradas e horários; visualiza avisos da operação; publica comunicados relacionados à própria rota; consulta os avisos ativos e não expirados disponíveis ao perfil. |
 | **Administrador** | Gerencia rotas e paradas; administra contas e cadastros de motoristas; acompanha e responde solicitações; publica e administra avisos; consulta relatórios operacionais e alunos por rota. |
 
-### Gestão de rotas e paradas
-
+### Gestão de rotas, paradas e horários
 O Administrador pode cadastrar e editar rotas, controlar sua situação e administrar as paradas associadas. Nas paradas, pode cadastrar e alterar informações, horários e coordenadas, além de remover e reorganizar a ordem dos pontos.
 
-### Avisos operacionais
+**Limitação importante:** embora a tela permita selecionar “Dia útil” ou “Sábado”, a V5.8.1 utiliza um único horário cadastrado por parada. A seleção não representa horários independentes para sábado.
 
+### Avisos operacionais
 Os avisos podem ser direcionados a uma rota ou ao conjunto de usuários previsto para avisos gerais. O Administrador dispõe de validade, filtros e histórico, incluindo controle de ativação. O Motorista publica avisos relacionados à própria rota.
 
 ### Atendimento e relatórios
-
-As solicitações são organizadas por tipo e recebem protocolo. O painel administrativo permite acompanhar o andamento e responder. Os relatórios oferecem filtros por rota, tipo de solicitação, situação e período, além de indicadores e distribuição dos registros. Há também consulta de alunos por rota, distinguindo ativos e inativos.
+As solicitações são organizadas por tipo e recebem protocolo. O painel administrativo permite acompanhar o andamento e responder. Os relatórios oferecem filtros por rota, tipo de solicitação, situação e período, além de indicadores e distribuição dos registros. Há também consulta de alunos por rota, distinguindo ativos e inativos. A exportação CSV não está disponível na versão atual.
 
 ## 3. Como o sistema funciona
 
@@ -41,7 +40,6 @@ Na arquitetura atual, a conta e a senha são criadas no Firebase Authentication;
 ## 4. Limites que precisam ser explicados corretamente
 
 O mapa é uma **visualização das paradas cadastradas e de uma linha que conecta os pontos**. A V5.8.1 não oferece:
-
 - rastreamento GPS ou localização do veículo em tempo real;
 - cálculo de navegação pelas ruas;
 - otimização automática de trajetos;
@@ -51,11 +49,12 @@ O mapa é uma **visualização das paradas cadastradas e de uma linha que conect
 Esses itens não devem ser apresentados como funcionalidades prontas. Qualquer evolução nessa direção exige estudo, implementação, avaliação de custos e testes próprios.
 
 Outras limitações relevantes:
-
 - a criação inicial de contas ocorre pelo Firebase Console;
 - não há Cloud Functions na arquitetura atual;
 - as Firestore Security Rules não estão versionadas neste repositório;
-- a leitura de avisos é armazenada localmente no navegador e não é sincronizada entre dispositivos.
+- a leitura de avisos é armazenada localmente no navegador e não é sincronizada entre dispositivos;
+- os horários de sábado não são independentes dos horários de dias úteis;
+- os cards de acesso rápido possuem acionamento por Enter, mas não foi identificado acionamento explícito por Espaço na função examinada.
 
 ## 5. Roteiro sugerido para demonstração
 
@@ -75,6 +74,12 @@ A documentação de segurança explica a diferença entre restrições visuais d
 
 Esses resultados são evidências de verificações específicas; não equivalem a uma auditoria independente, a uma suíte automatizada completa ou a uma garantia de segurança. A cópia exata das Rules em produção precisa ser obtida do Firebase Console para revisão e versionamento.
 
-## 7. Mensagem central
+## 7. Melhorias futuras documentadas
+
+O [roadmap](roadmap.md) separa três propostas aprovadas para constar no planejamento — exportação CSV, horários independentes para sábado e complementação da acessibilidade dos cards — de quatro temas ainda em análise: GPS em tempo real, otimização automática de trajetos, estimativa de economia e arquitetura Secretaria × Escolas.
+
+Essa classificação é documental. Não representa autorização para desenvolvimento, prazo ou promessa de entrega. A versão funcional apresentada permanece a V5.8.1 Spark.
+
+## 8. Mensagem central
 
 O SIRE centraliza informações que hoje podem estar dispersas entre rotas, horários, avisos e solicitações. A plataforma oferece uma base digital para melhorar a comunicação e apoiar o acompanhamento administrativo do transporte escolar, mantendo claros os limites do que está implementado na versão atual.
