@@ -13,8 +13,9 @@ A proposta do SIRE é reunir **rotas, horários, mapas, avisos, atendimento e ge
 
 ## Estado atual do repositório
 
-- **Versão exibida no sistema:** `V5.8.1 Spark`
-- **Branch analisada:** `main`
+- **Versão de referência publicada em `main`:** `V5.8.1 Spark`
+- **Candidata de revisão nesta branch:** `V5.8.2 Spark` (ajuste de acessibilidade dos atalhos; ainda não publicada no GitHub Pages)
+- **Branch de referência:** `main`
 - **Hospedagem prevista:** GitHub Pages
 - **Frontend:** aplicação web estática em um único `index.html`
 - **Autenticação:** Firebase Authentication (e-mail e senha)
@@ -23,7 +24,7 @@ A proposta do SIRE é reunir **rotas, horários, mapas, avisos, atendimento e ge
 - **Cloud Functions:** não utilizadas na arquitetura atual
 - **Perfis atuais:** Aluno, Motorista e Administrador
 
-> Esta documentação foi preparada a partir do estado do repositório em 03/09/2026. As Firestore Security Rules não estão presentes na raiz do repositório analisado, portanto a documentação definitiva de segurança deve ser complementada quando essas regras forem adicionadas ou fornecidas.
+> Revisão documental registrada em 22/11/2026, tomando como referência a V5.8.1 publicada na `main` e a candidata V5.8.2 nesta branch. As Firestore Security Rules continuam ausentes do repositório; não foram recriadas por aproximação, pois a versão exata deve ser exportada do Firebase Console.
 
 ## Estrutura documentada do repositório
 
@@ -70,6 +71,7 @@ A documentação foi separada em páginas menores para facilitar manutenção e 
 - [Funcionalidades atuais](docs/funcionalidades.md)
 - [Segurança e controle de acesso](docs/seguranca.md)
 - [Roadmap e próximas implementações](docs/roadmap.md)
+- [Registro de testes manuais da V5.8.1](docs/testes-manuais-v5.8.1.md)
 - [Histórico de versões](CHANGELOG.md)
 
 ## Arquitetura resumida
@@ -282,6 +284,10 @@ Fluxo sugerido:
 4. Teste login, rotas, avisos e permissão de cada perfil em contas de teste.
 5. Antes de uso institucional, execute uma auditoria das Firestore Security Rules.
 
+## Registro de validação manual
+
+Os testes manuais reportados pelo responsável do projeto antes da apresentação estão registrados em [docs/testes-manuais-v5.8.1.md](docs/testes-manuais-v5.8.1.md). O registro diferencia o que foi testado manualmente do que ainda não possui automação reproduzível.
+
 ## Segurança - estado documentado
 
 O código atual apresenta algumas decisões importantes:
@@ -330,6 +336,7 @@ A autorização dessa arquitetura deve ser feita nas **Firestore Security Rules*
 - **V5.6** - horários visíveis em Rotas e filtro administrativo de alunos por rota.
 - **V5.6.1** - navegação Início/Voltar dinâmica e ajustes no fluxo do Motorista.
 - **V5.8 / V5.8.1** - gestão ampliada de rotas/paradas, avisos avançados, acessibilidade e centralização dos atalhos do Motorista.
+- **V5.8.2 (candidata nesta branch)** - atalhos interativos convertidos em botões HTML nativos, com suporte de teclado por Enter e Espaço; ainda depende de revisão e publicação.
 
 Os commits do repositório também registram evoluções como aprimoramento do cadastro de motoristas, testes com Google Maps posteriormente removidos e atualizações sucessivas do `index.html`.
 
