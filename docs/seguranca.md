@@ -22,7 +22,9 @@ Telefone e CNH de motoristas pertencem ao fluxo administrativo e ficam em `drive
 
 As Firestore Security Rules não estão versionadas no repositório atual. Por isso, este documento **não afirma que o sistema é invulnerável nem que as Rules publicadas estão corretas**.
 
-Antes de uso institucional, as Rules devem ser revisadas e testadas em ambiente controlado.
+Na validação pré-apresentação, o responsável pelo projeto informou que os testes manuais de login, edição administrativa de rotas/paradas e tentativa de acesso não autorizado via ferramentas do navegador foram concluídos com os resultados esperados. O registro está em [testes-manuais-v5.8.1.md](testes-manuais-v5.8.1.md).
+
+Esse resultado é evidência de testes manuais específicos, não uma auditoria completa nem uma prova de segurança. Antes de uso institucional, as Rules exatas publicadas no Firebase devem ser exportadas, versionadas, revisadas e testadas em ambiente controlado.
 
 ## Casos recomendados para auditoria
 
@@ -37,6 +39,10 @@ Antes de uso institucional, as Rules devem ser revisadas e testadas em ambiente 
 - conta inativa tentando acessar dados;
 - tentativa de escalada para Administrador;
 - tentativa de criar/alterar documentos diretamente pelo SDK/DevTools.
+
+## Automação disponível no repositório
+
+A verificação do GitHub Actions compila sintaticamente o JavaScript inline do `index.html`. Ela detecta erros de sintaxe, mas não executa o site, não simula o Firebase e não testa as Firestore Security Rules. Para isso, continua necessário preparar testes de integração com o Firebase Emulator Suite.
 
 ## Metodologia recomendada
 
