@@ -30,24 +30,24 @@ A proposta do SIRE é reunir **rotas, horários, mapas, avisos, atendimento e ge
 
 ```text
 sire/
+|-- .github/workflows/validate.yml
+|-- docs/
+|   |-- README.md
+|   |-- arquitetura.md
+|   |-- funcionalidades.md
+|   |-- seguranca.md
+|   |-- roadmap.md
+|   |-- testes-manuais-v5.8.1.md
+|   `-- guias/
+|       |-- Aluno.md / Aluno.pdf
+|       |-- Motorista.md / Motorista.pdf
+|       `-- Admin.md / Admin.pdf
+|-- scripts/check-inline-js.mjs
 |-- index.html
 |-- firebase-config.js
 |-- appcheck-config.js
 |-- README.md
-|-- CHANGELOG.md
-`-- docs/
-    |-- README.md
-    |-- arquitetura.md
-    |-- funcionalidades.md
-    |-- seguranca.md
-    |-- roadmap.md
-    `-- guias/
-        |-- Aluno.md
-        |-- Aluno.pdf
-        |-- Motorista.md
-        |-- Motorista.pdf
-        |-- Admin.md
-        `-- Admin.pdf
+`-- CHANGELOG.md
 ```
 
 ### `index.html`
@@ -73,6 +73,12 @@ A documentação foi separada em páginas menores para facilitar manutenção e 
 - [Roadmap e próximas implementações](docs/roadmap.md)
 - [Registro de testes manuais da V5.8.1](docs/testes-manuais-v5.8.1.md)
 - [Histórico de versões](CHANGELOG.md)
+
+## Verificação automatizada do repositório
+
+O GitHub Actions executa `scripts/check-inline-js.mjs` em pushes e pull requests. Essa verificação compila sintaticamente o JavaScript inline do `index.html` e confirma a presença dos dois arquivos de configuração cliente.
+
+**Escopo:** é uma verificação estática de sintaxe. Ela não inicia o site, não autentica no Firebase, não acessa o Firestore e não valida as Security Rules. Os testes funcionais e de autorização continuam exigindo execução controlada.
 
 ## Arquitetura resumida
 
