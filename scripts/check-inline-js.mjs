@@ -12,9 +12,9 @@ if (!existsSync(htmlPath)) {
 }
 
 const html = readFileSync(htmlPath, 'utf8');
-const scriptTags = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+const scriptTags = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
 const inlineScripts = scriptTags.filter(([, attributes, body]) => {
-  return !/\\bsrc\\s*=/i.test(attributes) && body.trim().length > 0;
+  return !/\bsrc\s*=/i.test(attributes) && body.trim().length > 0;
 });
 
 if (inlineScripts.length === 0) {
