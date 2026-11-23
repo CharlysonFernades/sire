@@ -14,7 +14,8 @@ A proposta do SIRE é reunir **rotas, horários, mapas, avisos, atendimento e ge
 ## Estado atual do repositório
 
 - **Versão exibida no sistema:** `V5.8.1 Spark`
-- **Branch analisada:** `main`
+- **Branch principal do código:** `main`
+- **Branch desta revisão documental:** `docs/organizacao-para-apresentacao-v5-8-2`
 - **Hospedagem prevista:** GitHub Pages
 - **Frontend:** aplicação web estática em um único `index.html`
 - **Autenticação:** Firebase Authentication (e-mail e senha)
@@ -36,10 +37,12 @@ sire/
 |-- CHANGELOG.md
 `-- docs/
     |-- README.md
+    |-- apresentacao.md
     |-- arquitetura.md
     |-- funcionalidades.md
     |-- seguranca.md
     |-- roadmap.md
+    |-- testes-manuais.md
     `-- guias/
         |-- Aluno.md
         |-- Aluno.pdf
@@ -146,7 +149,7 @@ Os cards de acesso rápido aparecem antes das informações gerais do perfil.
 - O mapa não realiza rastreamento GPS em tempo real, não calcula navegação pelas ruas e não otimiza trajetos automaticamente.
 - Administrador pode cadastrar/editar rotas e gerenciar paradas.
 - Latitude e longitude são opcionais, mas precisam ser preenchidas juntas para a parada aparecer no mapa.
-- O código atual limita uma rota a até 100 paradas.
+- A seleção “Dia útil” ou “Sábado” utiliza o mesmo horário cadastrado por parada; não há horários independentes para sábado na V5.8.1.
 
 ### Avisos e notificações
 
@@ -308,25 +311,9 @@ Entretanto, **as Firestore Security Rules não estão no repositório analisado*
 
 ## Roadmap planejado
 
-> Os itens abaixo **não fazem parte da V5.8.1 atual**. Devem permanecer identificados como planejados até serem implementados e testados.
+As propostas futuras estão classificadas em [docs/roadmap.md](docs/roadmap.md). Três foram aprovadas para constar no planejamento: exportação CSV, horários independentes para sábado e complementação da acessibilidade dos cards. GPS em tempo real, otimização automática, estimativa de economia e arquitetura Secretaria × Escolas permanecem em análise.
 
-### Arquitetura Secretaria x Escolas
-
-- **Secretaria de Transportes / Administração geral**
-  - visão agregada de todas as escolas;
-  - cadastro/gestão de escolas, rotas, veículos e motoristas;
-  - criação de contas administrativas autorizadas;
-  - gestão global e relatórios consolidados.
-
-- **Administração de Escola**
-  - acesso restrito à própria escola;
-  - gestão dos alunos da unidade;
-  - criação de contas de Aluno/Administração da escola dentro do escopo permitido;
-  - sem acesso global a alunos de outras escolas;
-  - sem permissão para administrar motoristas fora do escopo definido.
-
-A autorização dessa arquitetura deve ser feita nas **Firestore Security Rules**, e não apenas escondendo telas no HTML.
-
+Essa classificação é exclusivamente documental. Não há desenvolvimento, teste ou prazo aprovado para esses itens. A proposta de histórico completo de avisos para Motorista foi descartada e não integra o roadmap atual.
 ## Histórico de evolução visível no código/repositório
 
 - **V5.4** - esquema de campos mais restrito, histórico protegido, status Ativo/Inativo e configuração de App Check no repositório.
@@ -354,8 +341,9 @@ Do ponto de vista do estudante, uma rota mais eficiente pode significar menos te
 
 - GitHub: `CharlysonFernades/sire`
 - Branch principal: `main`
+- Branch documental desta revisão: `docs/organizacao-para-apresentacao-v5-8-2`
 
 ---
 
 **SIRE - Sistema Integrado de Rotas Escolares**  
-Documentação preparada para a versão V5.8.1 Spark.
+Documentação preparada para a versão funcional V5.8.1 Spark.
