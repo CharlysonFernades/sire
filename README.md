@@ -23,7 +23,7 @@ A proposta do SIRE é reunir **rotas, horários, mapas, avisos, atendimento e ge
 - **Cloud Functions:** não utilizadas na arquitetura atual
 - **Perfis atuais:** Aluno, Motorista e Administrador
 
-> Esta documentação foi preparada a partir do estado do repositório em 03/09/2026. As Firestore Security Rules não estão presentes na raiz do repositório analisado, portanto a documentação definitiva de segurança deve ser complementada quando essas regras forem adicionadas ou fornecidas.
+> **Revisão documental:** 22/11/2026. As Firestore Security Rules não estão versionadas neste repositório; a documentação descreve a arquitetura e os testes manuais relatados sem reconstruir Rules por aproximação.
 
 ## Estrutura documentada do repositório
 
@@ -71,6 +71,8 @@ A documentação foi separada em páginas menores para facilitar manutenção e 
 - [Segurança e controle de acesso](docs/seguranca.md)
 - [Roadmap e próximas implementações](docs/roadmap.md)
 - [Histórico de versões](CHANGELOG.md)
+- [Resumo para apresentação e roteiro de demonstração](docs/apresentacao.md)
+- [Registro de testes manuais relatados](docs/testes-manuais.md)
 
 ## Arquitetura resumida
 
@@ -140,7 +142,8 @@ Os cards de acesso rápido aparecem antes das informações gerais do perfil.
 - Administrador pode pesquisar e selecionar rotas.
 - Exibição de número, nome, escola, situação, motorista e veículo.
 - Tabela com ordem das paradas e horário previsto.
-- Mapa via Leaflet/OpenStreetMap quando existem coordenadas válidas.
+- Mapa via Leaflet/OpenStreetMap quando existem coordenadas válidas; exibe os pontos cadastrados e uma linha que os conecta.
+- O mapa não realiza rastreamento GPS em tempo real, não calcula navegação pelas ruas e não otimiza trajetos automaticamente.
 - Administrador pode cadastrar/editar rotas e gerenciar paradas.
 - Latitude e longitude são opcionais, mas precisam ser preenchidas juntas para a parada aparecer no mapa.
 - O código atual limita uma rota a até 100 paradas.
@@ -301,7 +304,7 @@ Entretanto, **as Firestore Security Rules não estão no repositório analisado*
 - Inativar o perfil no SIRE não desativa automaticamente a conta no Firebase Authentication.
 - Aplicação sem Cloud Functions: algumas operações administrativas permanecem dependentes do Console Firebase.
 - Firestore Security Rules não estão versionadas no repositório atual.
-- O mapa depende de coordenadas válidas cadastradas nas paradas.
+- O mapa depende de coordenadas válidas cadastradas nas paradas e não representa rastreamento GPS ou navegação rodoviária.
 
 ## Roadmap planejado
 
