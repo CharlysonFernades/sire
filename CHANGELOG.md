@@ -2,6 +2,16 @@
 
 Registro resumido da evolução do projeto com base na versão atual e no histórico disponível do repositório.
 
+## V5.8.2 — candidata de revisão (ainda não publicada)
+
+- cards de ação da página inicial convertidos em botões HTML nativos, com suporte automático a Enter e Espaço;
+- resultados da pesquisa de rotas convertidos em botões nativos, com identificador transportado por atributo de dados;
+- verificação estática de sintaxe JavaScript adicionada ao GitHub Actions;
+- registro dos testes manuais da V5.8.1 documentado separadamente;
+- nenhuma alteração nas coleções Firestore, nas regras de segurança ou na configuração Firebase.
+
+> Esta candidata está na branch `review/pre-apresentacao-v5-8-2`. Não é a versão publicada até ser revisada, testada e incorporada à `main`.
+
 ## V5.8.1
 
 - centralização dos atalhos do Motorista;
