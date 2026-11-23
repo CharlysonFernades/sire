@@ -8,6 +8,7 @@ Esta pasta concentra a documentação técnica e os manuais de utilização do *
 - [Funcionalidades atuais](funcionalidades.md)
 - [Segurança e controle de acesso](seguranca.md)
 - [Roadmap](roadmap.md)
+- [Registro de testes manuais da V5.8.1](testes-manuais-v5.8.1.md)
 
 ## Guias de utilização
 
