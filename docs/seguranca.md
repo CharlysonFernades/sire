@@ -1,67 +1,68 @@
 # Segurança e controle de acesso
 
+> **Escopo:** registro documental da arquitetura e dos testes manuais relatados para a V5.8.1. Este documento não é uma auditoria independente nem uma garantia de segurança.
+
 ## Princípio central
 
-A interface do SIRE separa funcionalidades por perfil, mas **ocultar botões ou páginas no HTML não constitui autorização de segurança**. O controle definitivo precisa ser aplicado no backend, principalmente por meio das Firestore Security Rules.
+A interface pode esconder módulos conforme o perfil, mas **ocultar botões ou páginas no HTML não é controle de autorização**. O acesso efetivo aos dados deve ser validado pelas Firestore Security Rules, aplicadas no backend.
 
-## Medidas observadas na versão atual
+## Controles e decisões observados
 
-- autenticação por Firebase Authentication;
-- perfil obtido do cadastro do usuário, em vez de ser escolhido na tela de login;
-- Aluno/Motorista carregam dados associados à própria rota;
-- solicitações de usuários não administrativos são consultadas pelo `ownerUid`;
-- dados privados de motoristas ficam separados da coleção pública;
-- contas possuem status Ativo/Inativo no cadastro do SIRE;
-- configuração cliente de Firebase App Check presente no repositório.
+- Autenticação por Firebase Authentication.
+- Perfil associado ao UID, em vez de o usuário escolher seu papel na tela.
+- Separação dos fluxos por perfil Aluno, Motorista e Administrador.
+- Vínculo de alunos e motoristas à rota correspondente.
+- Separação de dados administrativos de motoristas (`drivers`) e dados reduzidos para fluxos autorizados (`driverPublic`).
+- Separação das solicitações por usuário/proprietário nos fluxos não administrativos.
+- Situação Ativo/Inativo em cadastros do SIRE.
+- Configuração cliente de App Check presente no repositório.
 
-## Dados sensíveis
+A presença desses elementos não prova, por si só, que todas as operações estão protegidas. A autorização depende das Rules publicadas e de testes que tentem também operações fora da interface.
 
-Telefone e CNH de motoristas pertencem ao fluxo administrativo e ficam em `drivers`. A coleção `driverPublic` contém somente os campos necessários para os fluxos autorizados.
+## Testes manuais relatados
 
-## Security Rules
+O responsável pelo projeto informou resultados aprovados em cenários específicos, incluindo:
 
-As Firestore Security Rules não estão versionadas no repositório atual. Por isso, este documento **não afirma que o sistema é invulnerável nem que as Rules publicadas estão corretas**.
+- acesso permitido à própria rota e negado a outra rota;
+- leitura direta de aviso inativo recusada com `permission-denied`;
+- leitura direta de registro inativo em `driverPublic` recusada com `permission-denied`;
+- acesso de Aluno à coleção privada `drivers` negado;
+- tentativa de alteração do próprio perfil de Aluno para Administrador negada;
+- login, edição administrativa de rotas/paradas e atalhos visuais do Motorista testados com resultado aprovado.
 
-Antes de uso institucional, as Rules devem ser revisadas e testadas em ambiente controlado.
+A lista, os limites e a natureza desses resultados estão detalhados em [Registro de testes manuais](testes-manuais.md). Eles são relatos de testes pontuais, não execução independente desta branch.
 
-## Casos recomendados para auditoria
+## Firestore Security Rules
 
-- aluno tentando ler rota de outro aluno;
-- aluno tentando alterar `role` ou `routeId`;
-- motorista tentando publicar aviso para outra rota;
-- motorista tentando modificar rotas/paradas;
-- leitura de `drivers` por Aluno/Motorista;
-- consulta de solicitações de outro usuário;
-- gravação de campos não permitidos;
-- exclusão indevida de histórico;
-- conta inativa tentando acessar dados;
-- tentativa de escalada para Administrador;
-- tentativa de criar/alterar documentos diretamente pelo SDK/DevTools.
+As Rules efetivamente utilizadas no ambiente publicado **não estão versionadas neste repositório**. Não foram incluídas nesta revisão porque a cópia exata publicada no Firebase Console não foi fornecida. Não se deve reconstruí-las por aproximação.
 
-## Metodologia recomendada
+Antes de uso institucional, é necessário:
 
-1. congelar uma versão do sistema;
-2. executar testes automatizados com Firebase Emulator Suite;
-3. testar perfis diferentes e documentos fora do escopo;
-4. registrar resultado esperado e obtido;
-5. corrigir código/Rules;
-6. executar reteste;
-7. fazer testes de regressão das funcionalidades legítimas.
+1. obter a cópia exata das Rules publicadas;
+2. revisar o escopo de leitura e escrita de cada perfil e coleção;
+3. testar as Rules em ambiente controlado, preferencialmente com Firebase Emulator Suite;
+4. registrar resultados esperados e observados;
+5. repetir testes de regressão após qualquer alteração;
+6. versionar somente o arquivo exato que foi revisado e aprovado.
 
 ## App Check
 
-O repositório possui configuração cliente de App Check. A presença do arquivo não prova, por si só, que a proteção esteja efetivamente aplicada: isso também depende do estado e das políticas configuradas no Firebase Console.
+O repositório contém configuração cliente de App Check. A existência desse arquivo não comprova que a aplicação esteja efetivamente protegida em todos os ambientes. É necessário conferir o provedor, o registro do aplicativo e as políticas aplicadas no Firebase Console.
 
-## Segredos
+## Contas e dados sensíveis
 
-O arquivo de configuração Web Firebase pode ser público. Entretanto, nunca devem ser versionados:
+A criação inicial de e-mail e senha ocorre em Firebase Authentication. O painel do SIRE vincula o UID a um perfil. Dados como telefone e CNH de motoristas devem permanecer restritos ao fluxo administrativo e não devem ser publicados em documentação de apresentação, logs ou exemplos.
 
-- senha de usuário;
-- Service Account;
-- chave privada;
-- token administrativo;
-- segredo de backend.
+Nunca versionar senhas, Service Accounts, chaves privadas, tokens administrativos ou segredos de backend. A configuração pública do cliente Web Firebase não equivale a uma credencial administrativa; ainda assim, a segurança precisa estar nas Rules e nas configurações do projeto.
 
-## Objetivo de segurança
+## Limitações do que foi verificado
 
-A meta correta não é prometer “100% seguro”, e sim reduzir a superfície de ataque, bloquear acessos fora do escopo e validar os controles com testes reproduzíveis.
+- Os testes listados são manuais e foram relatados pelo responsável.
+- Não há, neste registro, evidência de uma suíte automatizada completa.
+- Não há confirmação de execução integral do Firebase Emulator Suite.
+- Não houve auditoria independente das Rules de produção nesta revisão documental.
+- Testes pontuais não permitem afirmar que o sistema é “100% seguro” ou livre de vulnerabilidades.
+
+## Objetivo
+
+O objetivo é reduzir acessos indevidos, limitar cada perfil ao escopo necessário e manter evidências reproduzíveis. Qualquer afirmação sobre segurança deve indicar quais Rules, ambientes e cenários foram efetivamente testados.
